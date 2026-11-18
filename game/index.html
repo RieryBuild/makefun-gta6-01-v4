@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOLMAR BAY — an open-world crime game at golden hour</title>
+<!-- An empty data-URI favicon: the browser asks for /favicon.ico on every
+     load, and a 404 there shows up as a console error. This silences it
+     without adding a file. -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="fatal"></div>
+
+<!-- The HUD: everything the player reads while playing. -->
+<div id="hud">
+  <div id="mission-panel" class="panel">
+    <div id="mission-name">SOLMAR BAY</div>
+    <div id="objective">Head to Rosa's Garage to start the story</div>
+    <div id="stage-pips"></div>
+    <div id="next-line"></div>
+  </div>
+
+  <div id="status-panel" class="panel">
+    <div id="cash">$250</div>
+    <div id="goal-bar"><div id="goal-fill"></div></div>
+    <div id="goal">SAVE THE GARAGE — $50,000 GOAL · 0%</div>
+    <div id="postcards">✉ POSTCARDS 0 / 10</div>
+    <div id="rep-line">REP 1 · NEW IN TOWN — 0/250</div>
+    <div id="rep-bar"><div id="rep-fill"></div></div>
+    <div id="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+    <div id="health-bar"><div id="health-fill"></div></div>
+    <div id="armour-bar"><div id="armour-fill"></div></div>
+    <div id="health-text">100</div>
+  </div>
+
+  <div id="clock-panel" class="panel">
+    <div id="clock">DAY 1 · 17:24</div>
+    <div id="location"><b>Downtown</b><span>Marlin St</span></div>
+  </div>
+
+  <div id="response-panel" class="panel">
+    <div class="response-title">SBPD RESPONSE</div>
+    <div id="response-list"></div>
+  </div>
+
+  <div id="drive-panel" class="panel">
+    <div id="speed-row"><span id="speed"></span><span id="speed-unit"></span></div>
+    <div id="vehicle-name"></div>
+    <div id="condition-bar"><div id="condition-fill"></div></div>
+  </div>
+
+  <div id="combat-panel" class="panel">
+    <div id="ammo">RIFLE 12 / 12</div>
+    <div id="weapon-slots"><span class="slot active">RIFLE</span></div>
+  </div>
+
+  <div id="radio-panel" class="panel">
+    <div id="radio-name">♪ SUNSET 104.2 · Golden Hour FM</div>
+    <div id="radio-track">Palm Static — Coral Ghosts</div>
+  </div>
+
+  <canvas id="minimap" width="180" height="180"></canvas>
+
+  <div id="dialogue">
+    <canvas id="dialogue-portrait" width="72" height="72"></canvas>
+    <div class="dialogue-body">
+      <div id="dialogue-speaker">Rosa</div>
+      <div id="dialogue-text"></div>
+    </div>
+  </div>
+
+  <div id="prompt"></div>
+  <div id="banner"><div id="banner-title"></div><div id="banner-text"></div></div>
+  <div id="toast"></div>
+  <div id="crosshair"></div>
+  <div id="hitmarker">✕</div>
+  <div id="damage-flash"></div>
+  <div id="arrest-wrap"><div class="arrest-label">ARRESTED — HOLDING</div><div id="arrest-bar"><div id="arrest-fill"></div></div></div>
+  <div id="score-popups"></div>
+</div>
+
+<!-- WASTED / BUSTED end screens. -->
+<div id="wasted" class="end-screen"><div class="end-title">WASTED</div><div class="end-sub">Solmar General patched you up</div></div>
+<div id="busted" class="end-screen"><div class="end-title">BUSTED</div><div class="end-sub">SBPD released you with a fine</div></div>
+
+<!-- The start screen: the story hook and the menu, over the live panorama. -->
+<div id="start-screen">
+  <div class="start-inner">
+    <div id="game-title">SOLMAR BAY</div>
+    <div id="game-subtitle">an open-world crime game at golden hour</div>
+    <p id="story-intro"></p>
+    <div class="menu-buttons">
+      <button id="btn-new" class="menu-btn primary">NEW GAME</button>
+      <button id="btn-continue" class="menu-btn">CONTINUE</button>
+      <button id="btn-mute" class="menu-btn">Sound: ON</button>
+    </div>
+    <div class="controls-line">WASD move/drive · Mouse look · Left-click shoot · Right-click aim · E interact · R reload · Space handbrake · Shift run · N radio · M mute · P pause</div>
+  </div>
+</div>
+
+<!-- The pause menu. -->
+<div id="pause-menu">
+  <div class="pause-inner">
+    <div class="pause-title">PAUSED</div>
+    <div class="menu-buttons">
+      <button id="btn-resume" class="menu-btn primary">RESUME</button>
+      <button id="btn-restart" class="menu-btn">RESTART STORY</button>
+      <button id="btn-quit" class="menu-btn">QUIT TO MENU</button>
+    </div>
+  </div>
+</div>
+
+<div id="hint">WASD move · E interact · P pause · M mute</div>
+
+<script src="./vendor/three.min.js"></script>
+<script type="module" src="./src/boot.js"></script>
+</body>
+</html>
