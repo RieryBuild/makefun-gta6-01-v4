@@ -1,4 +1,4 @@
-// SOLMAR BAY — the numbers every system agrees on.
+// PUERTO DEL SOL — the numbers every system agrees on.
 //
 // One job: declare the map, the tuning and the look in one place, so the
 // city, the traffic, the police, the missions and the camera all share one
@@ -45,13 +45,37 @@ export const LIGHTHOUSE_POS = { x: 254, z: 0 }; // end of the middle pier, closi
 export const WATERLINE = { eastX: 258, southZ: 232 };
 
 // ---------- Districts: the city's order ----------
-// Downtown is the glass core around the centre; midtown rings it in
-// brick-and-stucco mid-rise; old town (west) is pastel stucco walk-ups;
-// the docks (east) are brick warehouses and containers; the beachfront
-// (south) is white villas under terracotta. Parks and landmarks are fixed.
-export const DISTRICT_NAMES = ['downtown', 'midtown', 'oldtown', 'docks', 'beachfront', 'park', 'landmark'];
+// Six hard identities, not one grid: downtown is the glass core around
+// the centre; midtown rings it in brick-and-stucco mid-rise; old town is
+// pastel stucco walk-ups; the docks (east) are brick warehouses and
+// containers; the beachfront (south) is pastel Art Deco villas under
+// terracotta; the hills (west + north edges) are walled estates under
+// the ridges. Parks and landmarks are fixed.
+export const DISTRICT_NAMES = ['downtown', 'midtown', 'oldtown', 'docks', 'beachfront', 'hills', 'park', 'landmark'];
 export const LANDMARK_BLOCKS = new Set(['-1,-1', '-2,-3', '-3,2', '2,-3', '0,3']);
 export const PARK_BLOCKS = new Set(['1,1', '-3,-2']);
+
+// Player-facing district names for the transient district card (GTA's
+// location text, script font, on entry — never a permanent label).
+export const DISTRICT_DISPLAY = {
+  downtown: 'Centro',
+  midtown: 'Barrio Central',
+  oldtown: 'Casco Viejo',
+  docks: 'El Puerto',
+  beachfront: 'Playa del Sol',
+  hills: 'Lomas Altas',
+  park: 'Parque del Sol',
+  landmark: 'Puerto del Sol',
+};
+
+// Landmark blocks show their own name on the district card.
+export const LANDMARK_DISPLAY = {
+  '-1,-1': "Rosa's Garage",
+  '-2,-3': 'Del Sol General',
+  '-3,2': 'PSPD Precinct 4',
+  '2,-3': 'Water Tower',
+  '0,3': 'Beach Pavilion',
+};
 
 export function districtAt(bx, bz) {
   const key = `${bx},${bz}`;
@@ -59,11 +83,20 @@ export function districtAt(bx, bz) {
   if (PARK_BLOCKS.has(key)) return 'park';
   if (bz === 3) return 'beachfront';
   if (bx === 3) return 'docks';
+  if (bx === -4 || bz === -4) return 'hills';
   // Manhattan distance from the centre block, in blocks.
   const ring = Math.abs(bx + 0.5) + Math.abs(bz + 0.5);
   if (ring <= 2) return 'downtown';
   if (ring <= 4) return 'midtown';
   return 'oldtown';
+}
+
+// The name the district card shows for a block: the landmark's own name
+// on landmark blocks, the district's display name everywhere else.
+export function districtDisplayName(bx, bz) {
+  const key = `${bx},${bz}`;
+  if (LANDMARK_DISPLAY[key]) return LANDMARK_DISPLAY[key];
+  return DISTRICT_DISPLAY[districtAt(bx, bz)] || 'Puerto del Sol';
 }
 
 // The height gradient: floors fall as the block moves away from the centre,
@@ -72,9 +105,10 @@ export function districtAt(bx, bz) {
 export function floorsAt(bx, bz, kind) {
   const ring = Math.abs(bx + 0.5) + Math.abs(bz + 0.5);
   const step = ((bx * 7 + bz * 11) % 3 + 3) % 3; // 0..2, deterministic per block
-  if (kind === 'tower') return Math.max(9, 16 - Math.floor(ring) * 2 - step);
+  if (kind === 'tower') return Math.max(11, 18 - Math.floor(ring) * 2 - step);
   if (kind === 'midrise') return Math.max(4, 8 - Math.floor(ring) - step);
   if (kind === 'walkup') return 2 + (step % 2); // 2-3 floors, low and even
+  if (kind === 'estate') return 2; // hills estates: two floors behind walls
   return 2;
 }
 
@@ -106,10 +140,19 @@ export const FACADE_FAMILIES = {
     { base: '#f2cdb4', trim: '#d9a586', glass: '#4f7390', glow: '#ffc27a' },
     { base: '#eeb9a8', trim: '#d18f80', glass: '#46667f', glow: '#ffd27a' },
   ],
-  // Beachfront villas: white and pale sand under terracotta roofs.
+  // Beachfront villas: pastel Art Deco — pink, mint, peach, lavender —
+  // under terracotta roofs. Four families, so the beachfront reads as a
+  // painted row, not one white wall.
   beachfront: [
-    { base: '#f4ead6', trim: '#d8c8a8', glass: '#5d8aa0', glow: '#ffca7a' },
-    { base: '#efe0c4', trim: '#cdbb96', glass: '#54708a', glow: '#ffc27a' },
+    { base: '#f2c4c4', trim: '#d8a0a0', glass: '#5d8aa0', glow: '#ffca7a' },
+    { base: '#c4e8d8', trim: '#9ac8b0', glass: '#54708a', glow: '#ffc27a' },
+    { base: '#f2d4b4', trim: '#d8b088', glass: '#5d8aa0', glow: '#ffca7a' },
+    { base: '#d8c8e8', trim: '#b8a0d0', glass: '#54708a', glow: '#ffc27a' },
+  ],
+  // Hills estates: warm stone and cream behind garden walls.
+  hills: [
+    { base: '#e8dcc0', trim: '#c8b898', glass: '#4a6a84', glow: '#ffca7a' },
+    { base: '#dfd0ae', trim: '#bcae8c', glass: '#46607a', glow: '#ffc27a' },
   ],
 };
 
@@ -170,14 +213,14 @@ export const REP_RANKS = [
   { level: 3, name: 'GARAGE REGULAR', at: 600 },
   { level: 4, name: 'BAY RUNNER', at: 1100 },
   { level: 5, name: 'DOCKSIDE NAME', at: 1800 },
-  { level: 6, name: 'SOLMAR LEGEND', at: 2800 },
+  { level: 6, name: 'DEL SOL LEGEND', at: 2800 },
 ];
 export const REP_AWARDS = { mission: 150, nearMiss: 25, drift: 25, postcard: 50 };
 
 // ---------- Armour vests: pickup spots that refill Dana's vest ----------
 export const ARMOUR_SPOTS = [
   { x: -30, z: -38, name: "Rosa's Garage" },
-  { x: -72, z: -128, name: 'Solmar General' },
+  { x: -72, z: -128, name: 'Del Sol General' },
   { x: 176, z: 24, name: 'The Docks' },
 ];
 export const ARMOUR_MAX = 100;
@@ -214,7 +257,7 @@ export const RIFLE_STATS = {
   reload: 1.4,
 };
 
-// ---------- Heat: the SBPD response ----------
+// ---------- Heat: the PSPD response ----------
 export const HEAT_RULES = {
   maxStars: 5,
   decayDelay: 18, // unseen seconds before a star drops
@@ -225,25 +268,29 @@ export const HEAT_RULES = {
   heliStars: 3, // the helicopter joins at 3 stars
 };
 
-// ---------- SBPD callsigns: the response list names its units ----------
-// GTA-faithful: named units with a state each, not copies of one generic
-// label. Cruisers take the next free callsign in order; the helicopter is
-// always GULL-1.
+// ---------- PSPD callsigns: every unit carries a name ----------
+// GTA-faithful: named units, not copies of one generic label. Cruisers
+// take the next free callsign in order; the helicopter is always GULL-1.
+// (The callsigns live on the units; the radar shows them as blips.)
 export const CRUISER_CALLSIGNS = ['SNAPPER-11', 'MARLIN-10', 'TARPON-18', 'KESTREL-31', 'HERON-7', 'BARRACUDA-4'];
 export const OFFICER_CALLSIGNS = ['OFC. REYES', 'OFC. KANE', 'OFC. MARLOW', 'OFC. DUVALL'];
 export const HELI_CALLSIGN = 'GULL-1';
 
 // ---------- The living city ----------
+// GTA streets are never empty in daylight: 20 moving cars, 36 strolling
+// peds plus the fixed dock workers, beachgoers and standing pairs, and
+// 16 parked cars lining both kerbs. The play-test counts these exactly.
 export const CITY_LIFE = {
-  traffic: 14,
+  traffic: 20,
   trafficSpeed: 9,
-  peds: 26,
+  peds: 36,
+  parked: 16,
   pedWalk: 1.4,
   pedFlee: 4.4,
 };
 
 // ---------- The story ----------
-export const TITLE = 'SOLMAR BAY';
+export const TITLE = 'PUERTO DEL SOL';
 export const SUBTITLE = 'a sun-soaked open-world crime story';
 export const HERO_NAME = 'Dana Vega';
 export const GOAL_CASH = 50000; // the garage's protection bill. Mission rewards
@@ -258,12 +305,14 @@ export const SAVE_KEY = 'solmar-bay-save-v4';
 export const DEFAULT_SEED = 1;
 
 // ---------- Camera: low and close, so Dana is LARGE in frame ----------
+// The chase cam sits tight behind the bumper, GTA III's defining choice:
+// lower and closer than v4 (6.8 m / 2.6 m), with the speed FOV kick kept.
 export const CAMERA_TUNING = {
   onFootDist: 3.9,
   onFootHeight: 1.9,
   onFootShoulder: 0.5, // over-the-shoulder offset while aiming
-  driveDist: 7.8,
-  driveHeight: 3.1,
+  driveDist: 6.8,
+  driveHeight: 2.6,
   fov: 60,
   driveFov: 66,
   fovKick: 7, // extra FOV at top speed
