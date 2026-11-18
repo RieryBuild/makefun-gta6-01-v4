@@ -13,6 +13,7 @@
 import {
   BEACH_HOUSE, BEACH_LOT, CRATE_PICKUP, DOCKS_YARD, GARAGE_FORECOURT,
 } from './config.js';
+import { pillarGlow } from './textures.js';
 
 // id, title, reward, briefing, stages. A stage is a kind + a target +
 // the line its speaker says when it begins.
@@ -53,7 +54,7 @@ export const MISSIONS = [
     id: 'm4',
     title: 'The Getaway',
     reward: 3000,
-    briefing: 'Rosa: "The Kings tipped off SBPD — there is a warrant out with your name on it. Get to the beach house and lie low. Do NOT get cuffed."',
+    briefing: 'Rosa: "The Kings tipped off PSPD — there is a warrant out with your name on it. Get to the beach house and lie low. Do NOT get cuffed."',
     stages: [
       { kind: 'reachHideout', x: BEACH_HOUSE.x, z: BEACH_HOUSE.z, radius: 8, text: 'Lose the cops — reach the beach house', say: ['Dana', 'Three stars and a beach house. Just a regular Tuesday.'] },
       { kind: 'goto', x: GARAGE_FORECOURT.x, z: GARAGE_FORECOURT.z, radius: 7, text: 'Sneak back to Rosa\u2019s garage', say: ['Rosa', 'Warrant is gone. I know a guy. Do not ask.'] },
@@ -142,12 +143,18 @@ export class Missions {
     this.markedCar = null; // the car m2 wants stolen
     this.enemiesToKill = 0;
     this.kills = 0;
-    // Waypoint beacon: a light pillar + a spinning diamond over the target.
+    // Waypoint beacon: a soft light pillar + a spinning diamond over the
+    // target. The pillar is a camera-facing sprite with the feathered
+    // pillar texture — v4's open cylinder had razor-sharp vertical
+    // silhouette edges, and at 6 m it read as a 240 px pale column over
+    // the beach-lot frame (measured in the revision probe). A sprite has
+    // no silhouette: its alpha fades to zero on all four edges.
     this.beacon = new THREE.Group();
-    const beam = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.9, 0.9, 60, 10, 1, true),
-      new THREE.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
-    );
+    const beam = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: pillarGlow(), color: 0xffd23a, transparent: true, opacity: 0.55,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }));
+    beam.scale.set(4.5, 60, 1);
     beam.position.y = 30;
     const diamond = new THREE.Mesh(
       new THREE.OctahedronGeometry(1.1),
@@ -175,7 +182,7 @@ export class Missions {
   objectiveText() {
     if (!this.active) {
       const next = this.nextMission();
-      return next ? `Go to Rosa\u2019s garage — next job: ${next.title}` : 'Free roam — Solmar Bay is yours';
+      return next ? `Go to Rosa\u2019s garage — next job: ${next.title}` : 'Free roam — Puerto del Sol is yours';
     }
     const stage = this.currentStage();
     if (stage.kind === 'eliminate') {
@@ -240,7 +247,7 @@ export class Missions {
     context.onCash?.(def.reward);
     if (this.completedCount >= MISSIONS.length) {
       this.storyComplete = true;
-      context.onBanner?.('SOLMAR BAY IS YOURS', 'Kane is finished and the garage is saved — $50,000 raised, the whole street is Dana\u2019s. Free roam — drive, explore, cause trouble.', 7);
+      context.onBanner?.('PUERTO DEL SOL IS YOURS', 'Kane is finished and the garage is saved — $50,000 raised, the whole street is Dana\u2019s. Free roam — drive, explore, cause trouble.', 7);
     } else {
       context.onBanner?.('MISSION COMPLETE', `${def.title} — $${def.reward.toLocaleString('en-US')} earned`, 4);
       context.onDialogue?.('Rosa', 'Job done. Come back to the garage when you are ready for the next one.');
