@@ -176,9 +176,11 @@ export class Gunplay {
   }
 
   addSparks(point, colour) {
+    // Sparks carry the radial glow texture too: map-less sprites are
+    // solid squares, and these sit at the impact point in full view.
     for (let i = 0; i < 6; i += 1) {
       const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-        color: colour, transparent: true, opacity: 0.95,
+        map: glowPool(), color: colour, transparent: true, opacity: 0.95,
         blending: THREE.AdditiveBlending, depthWrite: false,
       }));
       sprite.scale.set(0.22, 0.22, 1);
