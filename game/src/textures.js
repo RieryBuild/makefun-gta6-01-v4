@@ -1,4 +1,4 @@
-// Procedural canvas textures: every surface in Solmar Bay is painted here.
+// Procedural canvas textures: every surface in Puerto del Sol is painted here.
 //
 // One job: turn the district palettes and the golden hour into the canvas
 // textures the buildings, streets and props wear. No image files, no
@@ -357,9 +357,9 @@ export function containerSide(colour, rng) {
     ctx.fillStyle = 'rgba(255,255,255,0.75)';
     ctx.font = '900 22px Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('SOLMAR LINE', 128, 58);
+    ctx.fillText('DEL SOL LINE', 128, 58);
     ctx.font = '700 13px Arial, sans-serif';
-    ctx.fillText('SBXU 402 118-7', 128, 82);
+    ctx.fillText('DSLU 402 118-7', 128, 82);
     speckle(ctx, 256, 128, rng, 200, 0.08);
     return textureFrom(canvas);
   });
@@ -402,21 +402,165 @@ export function tileRoof(rng) {
   });
 }
 
-// A shop sign: a painted board with a name and a line beneath it.
-export function shopSign(name, sub, bg, fg, rng) {
-  return cached(`sign|${name}|${bg}`, () => {
+// A brand mark: one small geometric logo drawn in a disc at the sign's
+// left end, so the city's shops read as brands, not just words. Every
+// mark is original line art — a sun, a fish, a cup, a palm, a wave, a
+// burger, a wheel, a gull, a bottle, a fuel drop, an anchor.
+function drawBrandMark(ctx, mark, cx, cy, fg) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.strokeStyle = fg;
+  ctx.fillStyle = fg;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  if (mark === 'sun') {
+    ctx.beginPath();
+    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.fill();
+    for (let i = 0; i < 8; i += 1) {
+      const a = (i / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 10, Math.sin(a) * 10);
+      ctx.lineTo(Math.cos(a) * 14, Math.sin(a) * 14);
+      ctx.stroke();
+    }
+  } else if (mark === 'fish') {
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(16, -6);
+    ctx.lineTo(16, 6);
+    ctx.closePath();
+    ctx.fill();
+  } else if (mark === 'cup') {
+    ctx.strokeRect(-8, -7, 13, 13);
+    ctx.beginPath();
+    ctx.arc(7, -1, 5, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-6, -11);
+    ctx.quadraticCurveTo(-3, -14, -6, -17);
+    ctx.stroke();
+  } else if (mark === 'palm') {
+    ctx.beginPath();
+    ctx.moveTo(0, 15);
+    ctx.quadraticCurveTo(2, 2, 0, -6);
+    ctx.stroke();
+    for (const [dx, dy] of [[-12, -8], [-6, -13], [4, -14], [12, -8]]) {
+      ctx.beginPath();
+      ctx.moveTo(0, -6);
+      ctx.quadraticCurveTo(dx / 2, -14, dx, dy);
+      ctx.stroke();
+    }
+  } else if (mark === 'wave') {
+    for (const dy of [-6, 2, 10]) {
+      ctx.beginPath();
+      ctx.moveTo(-14, dy);
+      ctx.quadraticCurveTo(-7, dy - 5, 0, dy);
+      ctx.quadraticCurveTo(7, dy + 5, 14, dy);
+      ctx.stroke();
+    }
+  } else if (mark === 'burger') {
+    ctx.beginPath();
+    ctx.arc(0, -4, 11, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(-11, -2, 22, 3);
+    ctx.fillRect(-11, 3, 22, 4);
+  } else if (mark === 'wheel') {
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let i = 0; i < 6; i += 1) {
+      const a = (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a) * 12, Math.sin(a) * 12);
+      ctx.stroke();
+    }
+  } else if (mark === 'bird') {
+    ctx.beginPath();
+    ctx.moveTo(-14, 2);
+    ctx.quadraticCurveTo(-7, -8, 0, 0);
+    ctx.quadraticCurveTo(7, -8, 14, 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-9, 9);
+    ctx.quadraticCurveTo(0, 2, 9, 9);
+    ctx.stroke();
+  } else if (mark === 'bottle') {
+    ctx.fillRect(-3, -15, 6, 8);
+    ctx.beginPath();
+    ctx.moveTo(-3, -7);
+    ctx.lineTo(-7, -2);
+    ctx.lineTo(-7, 14);
+    ctx.lineTo(7, 14);
+    ctx.lineTo(7, -2);
+    ctx.lineTo(3, -7);
+    ctx.closePath();
+    ctx.fill();
+  } else if (mark === 'drop') {
+    ctx.beginPath();
+    ctx.moveTo(0, -15);
+    ctx.quadraticCurveTo(10, 0, 8, 7);
+    ctx.quadraticCurveTo(5, 15, 0, 15);
+    ctx.quadraticCurveTo(-5, 15, -8, 7);
+    ctx.quadraticCurveTo(-10, 0, 0, -15);
+    ctx.fill();
+  } else if (mark === 'anchor') {
+    ctx.beginPath();
+    ctx.arc(0, -10, 3.5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(0, 12);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-10, 4);
+    ctx.quadraticCurveTo(-10, 14, 0, 14);
+    ctx.quadraticCurveTo(10, 14, 10, 4);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-8, -2);
+    ctx.lineTo(8, -2);
+    ctx.stroke();
+  } else {
+    // Default: a four-point star.
+    ctx.beginPath();
+    ctx.moveTo(0, -14);
+    ctx.quadraticCurveTo(3, -3, 14, 0);
+    ctx.quadraticCurveTo(3, 3, 0, 14);
+    ctx.quadraticCurveTo(-3, 3, -14, 0);
+    ctx.quadraticCurveTo(-3, -3, 0, -14);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// A shop sign: a painted board with a brand mark, a name and a line
+// beneath it. The mark sits in a disc at the left; the text shifts right.
+export function shopSign(name, sub, bg, fg, rng, mark = 'star') {
+  return cached(`sign|${name}|${bg}|${mark}`, () => {
     const [canvas, ctx] = makeCanvas(256, 64);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, 256, 64);
     ctx.strokeStyle = fg;
     ctx.lineWidth = 3;
     ctx.strokeRect(4, 4, 248, 56);
+    // Mark disc.
+    ctx.beginPath();
+    ctx.arc(30, 32, 20, 0, Math.PI * 2);
+    ctx.strokeStyle = fg;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    drawBrandMark(ctx, mark, 30, 32, fg);
     ctx.fillStyle = fg;
-    ctx.font = '900 24px Arial, sans-serif';
+    ctx.font = '900 22px Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(name, 128, 30);
-    ctx.font = '700 13px Arial, sans-serif';
-    ctx.fillText(sub, 128, 50);
+    ctx.fillText(name, 150, 30);
+    ctx.font = '700 12px Arial, sans-serif';
+    ctx.fillText(sub, 150, 50);
     speckle(ctx, 256, 64, rng, 60, 0.06);
     return textureFrom(canvas);
   });
@@ -440,28 +584,33 @@ export function palmFrond() {
   return cached('frond', () => {
     const [canvas, ctx] = makeCanvas(128, 256);
     ctx.clearRect(0, 0, 128, 256);
+    // Filled leaflets, not lines: v4 drew each leaflet as a 5 px stroke,
+    // and against the bright sunset sky the gaps between the strokes
+    // showed through — the palms read as green wireframe fans. Each
+    // leaflet is now a filled tapered triangle; 26 of them tile into a
+    // solid frond with a darker rib down the middle.
+    for (let i = 0; i < 26; i += 1) {
+      const t = i / 26;
+      const y = 250 - t * 230;
+      const spread = 54 * Math.sin(Math.PI * Math.min(1, t * 1.15));
+      const droop = 18 * t * t;
+      ctx.fillStyle = i % 2 === 0 ? '#3f8a3a' : '#357a33';
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(64, y - 5);
+        ctx.lineTo(64 + side * spread, y + droop + 14);
+        ctx.lineTo(64, y + 5);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    // The central rib, drawn over the leaflets.
     ctx.strokeStyle = '#2f6b2f';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(64, 250);
     ctx.quadraticCurveTo(70, 130, 64, 8);
     ctx.stroke();
-    for (let i = 0; i < 26; i += 1) {
-      const t = i / 26;
-      const y = 250 - t * 230;
-      const spread = 54 * Math.sin(Math.PI * Math.min(1, t * 1.15));
-      const droop = 18 * t * t;
-      ctx.strokeStyle = i % 2 === 0 ? '#3f8a3a' : '#357a33';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(64, y);
-      ctx.lineTo(64 - spread, y + droop + 14);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(64, y);
-      ctx.lineTo(64 + spread, y + droop + 14);
-      ctx.stroke();
-    }
     const texture = textureFrom(canvas);
     return texture;
   });
@@ -507,7 +656,9 @@ export function wheelFace() {
   });
 }
 
-// SBPD door livery: white door, badge star, "SBPD" + "SOLMAR BAY POLICE".
+// PSPD door livery: white door, badge star, "PSPD" + "PUERTO DEL SOL
+// POLICE". Re-drawn for the rename: the department line is 12 px so the
+// longer name fits the door (22 chars at 15 px would run off the edge).
 export function policeDoor() {
   return cached('police-door', () => {
     const [canvas, ctx] = makeCanvas(256, 128);
@@ -533,9 +684,9 @@ export function policeDoor() {
     ctx.fillStyle = '#1a2a4a';
     ctx.font = '900 44px Arial, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('SBPD', 92, 72);
-    ctx.font = '700 15px Arial, sans-serif';
-    ctx.fillText('SOLMAR BAY POLICE', 92, 98);
+    ctx.fillText('PSPD', 92, 72);
+    ctx.font = '700 12px Arial, sans-serif';
+    ctx.fillText('PUERTO DEL SOL POLICE', 92, 98);
     ctx.fillStyle = '#c8a13a';
     ctx.fillRect(92, 106, 140, 4);
     return textureFrom(canvas);
@@ -587,14 +738,31 @@ export function cloudPuff() {
       ctx.arc(x, y + 14, r * 0.7, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Belt and braces: fade the whole canvas to transparent at the bottom
-    // edge, so no paint ever reaches a hard boundary.
+    // Belt and braces: fade the whole canvas to transparent at ALL FOUR
+    // edges, so no paint ever reaches a hard boundary. v4 feathered only
+    // the bottom edge; the revision audit feathers every side, because a
+    // billboard's edge is visible from any angle the camera takes.
     ctx.globalCompositeOperation = 'destination-in';
-    const fade = ctx.createLinearGradient(0, 96, 0, 128);
-    fade.addColorStop(0, 'rgba(255,255,255,1)');
-    fade.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = fade;
+    const fadeBottom = ctx.createLinearGradient(0, 96, 0, 128);
+    fadeBottom.addColorStop(0, 'rgba(255,255,255,1)');
+    fadeBottom.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = fadeBottom;
     ctx.fillRect(0, 96, 256, 32);
+    const fadeTop = ctx.createLinearGradient(0, 0, 0, 24);
+    fadeTop.addColorStop(0, 'rgba(255,255,255,0)');
+    fadeTop.addColorStop(1, 'rgba(255,255,255,1)');
+    ctx.fillStyle = fadeTop;
+    ctx.fillRect(0, 0, 256, 24);
+    const fadeLeft = ctx.createLinearGradient(0, 0, 24, 0);
+    fadeLeft.addColorStop(0, 'rgba(255,255,255,0)');
+    fadeLeft.addColorStop(1, 'rgba(255,255,255,1)');
+    ctx.fillStyle = fadeLeft;
+    ctx.fillRect(0, 0, 24, 128);
+    const fadeRight = ctx.createLinearGradient(232, 0, 256, 0);
+    fadeRight.addColorStop(0, 'rgba(255,255,255,1)');
+    fadeRight.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = fadeRight;
+    ctx.fillRect(232, 0, 24, 128);
     ctx.globalCompositeOperation = 'source-over';
     return textureFrom(canvas);
   });
@@ -622,6 +790,93 @@ export function oilStain(rng) {
     ctx.beginPath();
     ctx.ellipse(64, 64, 20, 12, 0.4, 0, Math.PI * 2);
     ctx.fill();
+    return textureFrom(canvas);
+  });
+}
+
+// ---------- Feathered billboard textures (revision) ----------
+// The rule, stated once: EVERY billboard texture fades to alpha 0 at ALL
+// edges. A sprite with no map renders as a solid square — the v4 chase
+// frame's pale rectangle was fifteen map-less smoke sprites trailing the
+// hero car — and a billboard whose paint touches a canvas edge shows its
+// square bounds against a dark background. These three textures are the
+// revision's answer: radial gradients for round puffs, a length fade for
+// light cones, a soft bar for the waypoint pillar.
+
+// A soft smoke puff: layered radial blobs, fully transparent at the rim.
+export function smokePuff() {
+  return cached('smoke-puff', () => {
+    const [canvas, ctx] = makeCanvas(128, 128);
+    ctx.clearRect(0, 0, 128, 128);
+    const blobs = [
+      [64, 64, 46], [44, 52, 30], [84, 56, 32], [52, 84, 28], [80, 82, 26],
+    ];
+    for (const [x, y, r] of blobs) {
+      const gradient = ctx.createRadialGradient(x, y, 2, x, y, r);
+      gradient.addColorStop(0, 'rgba(255,255,255,0.75)');
+      gradient.addColorStop(0.6, 'rgba(255,255,255,0.35)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // The rim fade: nothing survives past r=60 of a 64-half canvas.
+    ctx.globalCompositeOperation = 'destination-in';
+    const rim = ctx.createRadialGradient(64, 64, 40, 64, 64, 62);
+    rim.addColorStop(0, 'rgba(255,255,255,1)');
+    rim.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = rim;
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.globalCompositeOperation = 'source-over';
+    return textureFrom(canvas);
+  });
+}
+
+// A length fade for light cones (heli searchlight, lighthouse beam):
+// full alpha at the apex end, zero at the wide base end, so the beam
+// dissolves instead of ending in a hard circular rim. ConeGeometry UVs
+// run v=1 at the apex (the canvas TOP with flipY) to v=0 at the base,
+// so the gradient runs top-opaque to bottom-transparent.
+export function beamFade() {
+  return cached('beam-fade', () => {
+    const [canvas, ctx] = makeCanvas(64, 256);
+    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, 'rgba(255,255,255,0.95)');
+    gradient.addColorStop(0.45, 'rgba(255,255,255,0.55)');
+    gradient.addColorStop(0.8, 'rgba(255,255,255,0.15)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 64, 256);
+    return textureFrom(canvas);
+  });
+}
+
+// A soft vertical bar for the waypoint pillar: alpha fades to zero at
+// all four edges — horizontally toward the sides (no hard silhouette)
+// and vertically toward the top and bottom (no hard caps).
+export function pillarGlow() {
+  return cached('pillar-glow', () => {
+    const [canvas, ctx] = makeCanvas(64, 256);
+    ctx.clearRect(0, 0, 64, 256);
+    // Horizontal falloff: full in the middle third, zero at the sides.
+    const across = ctx.createLinearGradient(0, 0, 64, 0);
+    across.addColorStop(0, 'rgba(255,255,255,0)');
+    across.addColorStop(0.32, 'rgba(255,255,255,0.85)');
+    across.addColorStop(0.68, 'rgba(255,255,255,0.85)');
+    across.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = across;
+    ctx.fillRect(0, 0, 64, 256);
+    // Vertical falloff: dissolve at the top, soften at the base.
+    ctx.globalCompositeOperation = 'destination-in';
+    const along = ctx.createLinearGradient(0, 0, 0, 256);
+    along.addColorStop(0, 'rgba(255,255,255,0)');
+    along.addColorStop(0.18, 'rgba(255,255,255,1)');
+    along.addColorStop(0.9, 'rgba(255,255,255,1)');
+    along.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = along;
+    ctx.fillRect(0, 0, 64, 256);
+    ctx.globalCompositeOperation = 'source-over';
     return textureFrom(canvas);
   });
 }
