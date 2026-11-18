@@ -1,4 +1,4 @@
-// Seeded chance: one seed always builds the same Solmar Bay.
+// Seeded chance: one seed always builds the same Puerto del Sol.
 //
 // A mulberry32 stream with forks, so every subsystem draws from its own
 // stream and a change in one never reshuffles the others. The streams are
