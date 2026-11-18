@@ -1,8 +1,31 @@
-/* SOLMAR BAY — HUD and menus.
-   The look: dark glass panels with an amber edge, a warm sunset accent
-   system (amber for cash and objectives, green for health, red for heat),
-   and one condensed-feeling sans stack throughout — no webfonts, so the
-   game loads with no network request. */
+/* PUERTO DEL SOL — HUD and menus.
+   The look: GTA's HUD law — icons, bars and bare numbers, text only
+   transiently. Three vendored OFL faces (see game/fonts/FONTS.md):
+   Passion One Bold for display type (money, WASTED/BUSTED, titles,
+   popups), Barlow Condensed SemiBold for HUD text, Yellowtail for the
+   script name cards. No network requests — the fonts live in the repo. */
+
+@font-face {
+  font-family: 'Passion One';
+  src: url('./fonts/passion-one-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('./fonts/barlow-condensed-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Yellowtail';
+  src: url('./fonts/yellowtail.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -10,7 +33,7 @@ html, body {
   width: 100%; height: 100%;
   overflow: hidden;
   background: #14101c;
-  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Barlow Condensed", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color: #f4f2ec;
   user-select: none;
 }
@@ -32,135 +55,178 @@ html, body {
 }
 #fatal.show { display: block; }
 
-/* ---------- Panels ---------- */
+/* ---------- HUD: icons, bars, bare numbers ---------- */
 
 #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
 
 /* The HUD hides while the start screen is up (see Hud.showStart). */
 body.menu-open #hud { visibility: hidden; }
 
-.panel {
-  position: absolute;
-  background: rgba(18, 14, 26, 0.72);
-  border: 1px solid rgba(255, 190, 110, 0.35);
-  border-radius: 10px;
-  padding: 10px 14px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(3px);
-}
-
-#mission-panel { top: 16px; left: 16px; max-width: 330px; }
-#mission-name {
-  font-size: 17px; font-weight: 800; letter-spacing: 0.08em;
-  color: #ffd23a; text-transform: uppercase;
-}
-#objective { font-size: 14px; line-height: 1.35; margin-top: 3px; color: #efe9dc; }
-#stage-pips { font-size: 12px; letter-spacing: 0.1em; margin-top: 6px; color: #c8bfa8; }
-#stage-pips .pip { color: #6a6355; margin-left: 3px; }
-#stage-pips .pip.done { color: #ff9a4a; }
-#next-line { font-size: 12px; color: #9a917e; margin-top: 2px; min-height: 0; }
-
-#status-panel { top: 16px; right: 16px; width: 252px; text-align: right; }
-#cash {
-  font-size: 32px; font-weight: 800; line-height: 1;
-  color: #7ae08a; letter-spacing: 0.02em;
-}
-#goal-bar, #rep-bar, #health-bar, #armour-bar, #condition-bar, #arrest-bar {
-  height: 7px; border-radius: 4px;
-  background: rgba(255, 255, 255, 0.14);
-  margin-top: 6px; overflow: hidden;
-}
-#goal-fill { height: 100%; background: #ff9a4a; width: 0%; }
-#goal { font-size: 11px; letter-spacing: 0.06em; color: #c8bfa8; margin-top: 4px; }
-#postcards { font-size: 12px; color: #ffd9a0; margin-top: 6px; letter-spacing: 0.05em; }
-#rep-line { font-size: 12px; color: #ffd23a; margin-top: 4px; letter-spacing: 0.05em; font-weight: 700; }
-#rep-fill { height: 100%; background: #ffd23a; width: 0%; }
-#stars { margin-top: 7px; font-size: 20px; letter-spacing: 4px; }
-#stars .star { color: rgba(255, 255, 255, 0.22); }
-#stars .star.lit { color: #ff5a4a; text-shadow: 0 0 8px rgba(255, 90, 74, 0.8); }
-#health-fill { height: 100%; background: #7ae08a; width: 100%; }
-#health-fill.low { background: #ff5a4a; }
-#armour-fill { height: 100%; background: #7ae0ff; width: 0%; }
-#health-text { font-size: 13px; color: #efe9dc; margin-top: 4px; font-weight: 700; }
-
-#clock-panel {
-  top: 16px; left: 50%; transform: translateX(-50%);
-  text-align: center; padding: 8px 18px;
-}
-#clock { font-size: 16px; font-weight: 800; letter-spacing: 0.14em; }
-#location { font-size: 13px; margin-top: 2px; }
-#location b {
-  color: #ff9a4a; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-  border: 1px solid rgba(255, 154, 74, 0.6); border-radius: 20px; padding: 1px 9px;
-  margin-right: 7px;
-}
-#location span { color: #d8d0bc; }
-
-#response-panel {
-  top: 178px; right: 16px; width: 252px;
-  display: none;
-}
-#response-panel.show { display: block; }
-.response-title {
-  font-size: 12px; font-weight: 800; letter-spacing: 0.12em; color: #ff8a7a;
-  margin-bottom: 6px;
-}
-.response-row {
-  display: flex; justify-content: space-between;
-  font-size: 13px; line-height: 1.55; color: #efe9dc;
-}
-.response-row .state { color: #7ae08a; font-weight: 700; font-size: 11px; letter-spacing: 0.05em; }
-
-#drive-panel {
-  bottom: 16px; right: 16px; width: 190px; text-align: right;
-  display: none;
-}
-#drive-panel.show { display: block; }
-#speed-row { font-size: 34px; font-weight: 800; line-height: 1; }
-#speed-unit { font-size: 13px; color: #c8bfa8; margin-left: 4px; }
-#vehicle-name { font-size: 13px; color: #ffd9a0; margin-top: 3px; }
-#condition-fill { height: 100%; background: #7ae08a; width: 100%; }
-#condition-fill.low { background: #ff5a4a; }
-
-#combat-panel { bottom: 16px; right: 16px; text-align: right; }
-#drive-panel.show + #combat-panel { bottom: 128px; }
-#ammo { font-size: 18px; font-weight: 800; letter-spacing: 0.06em; }
-#weapon-slots { margin-top: 5px; }
-#weapon-slots .slot {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-  border: 1px solid rgba(255, 210, 58, 0.7); color: #ffd23a;
-  border-radius: 4px; padding: 2px 8px;
-}
-
-#radio-panel { bottom: 200px; left: 16px; max-width: 300px; }
-#radio-name { font-size: 13px; font-weight: 800; color: #ffd23a; letter-spacing: 0.04em; }
-#radio-track { font-size: 13px; color: #d8d0bc; margin-top: 2px; }
-
+/* Radar, bottom-left. Backing store is 180x180; CSS renders it at 160. */
 #minimap {
   position: absolute; left: 16px; bottom: 16px;
-  width: 180px; height: 180px;
+  width: 160px; height: 160px;
   border-radius: 50%;
   border: 2px solid rgba(255, 190, 110, 0.5);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
 }
+/* Hurt feedback: a red pulse on the radar rim when Dana takes damage. */
+#minimap.hurt { box-shadow: 0 0 0 3px rgba(255, 60, 40, 0.8), 0 4px 18px rgba(0, 0, 0, 0.5); }
 
-/* ---------- Dialogue, prompt, banner, toast ---------- */
-
-#dialogue {
-  position: absolute; left: 16px; bottom: 286px;
-  display: none;
-  width: 430px;
-  background: rgba(18, 14, 26, 0.78);
-  border: 1px solid rgba(255, 190, 110, 0.35);
-  border-radius: 10px;
-  padding: 10px 12px;
-  gap: 12px;
+/* Three bare bars under the radar: health green, armour blue, REP gold.
+   No labels, no numbers — the colour is the label. */
+#bars {
+  position: absolute; left: 16px; bottom: 184px;
+  width: 160px;
+  display: flex; flex-direction: column; gap: 5px;
 }
-#dialogue.show { display: flex; }
-#dialogue-portrait { width: 72px; height: 72px; border-radius: 8px; flex: none; }
-.dialogue-body { min-width: 0; }
-#dialogue-speaker { font-size: 14px; font-weight: 800; color: #ffd23a; letter-spacing: 0.05em; }
-#dialogue-text { font-size: 15px; line-height: 1.4; margin-top: 2px; color: #f4f2ec; }
+#health-bar, #armour-bar, #rep-bar {
+  height: 9px; border-radius: 5px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+#health-fill { height: 100%; background: #7ed321; width: 100%; }
+#armour-fill { height: 100%; background: #4a90d9; width: 0%; }
+#rep-fill { height: 100%; background: #f5c518; width: 0%; }
+#armour-bar.hidden { display: none; }
+/* Low health: the bar flashes red. */
+#health-bar.low #health-fill { animation: health-flash 0.6s steps(2, start) infinite; }
+@keyframes health-flash {
+  0% { background: #ff3a2a; }
+  50% { background: #7ed321; }
+  100% { background: #ff3a2a; }
+}
+
+/* Bare cash number, top-right. */
+#cash {
+  position: absolute; top: 14px; right: 18px;
+  font-family: "Passion One", "Barlow Condensed", sans-serif;
+  font-size: 34px; font-weight: 700; line-height: 1;
+  color: #7ed321;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+/* Wanted stars, top-right under the cash. Hidden when clean. */
+#stars {
+  position: absolute; top: 56px; right: 18px;
+  display: none;
+  font-size: 22px; letter-spacing: 4px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+#stars.show { display: block; }
+#stars .star { color: rgba(255, 255, 255, 0.22); }
+#stars .star.lit { color: #ff5a4a; text-shadow: 0 0 10px rgba(255, 90, 74, 0.9); }
+#stars.pulse { animation: star-pulse 0.5s ease-out; }
+@keyframes star-pulse {
+  0% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* Objective: transient, top-left. A coloured square + one line. */
+#objective-line {
+  position: absolute; top: 16px; left: 16px;
+  display: none;
+  max-width: 460px;
+  font-size: 19px; line-height: 1.3;
+  color: #fff6e0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+#objective-line.show { display: flex; gap: 9px; align-items: flex-start; }
+#objective-mark {
+  flex: none; width: 12px; height: 12px; margin-top: 6px;
+  background: #ffd23a;
+  box-shadow: 0 0 8px rgba(255, 210, 58, 0.8);
+}
+#objective b.gold { color: #ffd23a; }
+#objective b.red { color: #ff8a7a; }
+#objective b.blue { color: #7ab8ff; }
+
+/* Help: the ONE transient box allowed, top-left under the objective. */
+#help-box {
+  position: absolute; top: 64px; left: 16px;
+  display: none;
+  background: rgba(18, 14, 26, 0.78);
+  border: 1px solid rgba(255, 210, 58, 0.5);
+  border-radius: 8px; padding: 7px 13px;
+  font-size: 16px; font-weight: 600; letter-spacing: 0.03em;
+  color: #efe9dc;
+}
+#help-box.show { display: block; }
+
+/* Weapon: silhouette icon + bare ammo number, bottom-right. */
+#weapon {
+  position: absolute; right: 18px; bottom: 16px;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+#weapon-icon { width: 96px; height: 40px; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)); }
+#ammo {
+  font-family: "Passion One", "Barlow Condensed", sans-serif;
+  font-size: 30px; font-weight: 700; line-height: 1;
+  color: #f4f2ec;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+#ammo.reloading { color: rgba(244, 242, 236, 0.45); }
+
+/* Speed: bare numeral + tiny km/h, only while driving. */
+#speedo {
+  position: absolute; right: 18px; bottom: 66px;
+  display: none;
+  text-align: right;
+}
+#speedo.show { display: block; }
+#speed-row { font-size: 34px; font-weight: 600; line-height: 1; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85); }
+#speed-unit { font-size: 13px; color: #c8bfa8; margin-left: 4px; }
+#condition-bar {
+  height: 4px; border-radius: 2px; margin-top: 5px;
+  background: rgba(255, 255, 255, 0.14); overflow: hidden;
+}
+#condition-fill { height: 100%; background: #7ae08a; width: 100%; }
+#condition-fill.low { background: #ff5a4a; }
+
+/* District / vehicle name card: script font, transient, bottom-right. */
+#name-card {
+  position: absolute; right: 18px; bottom: 128px;
+  display: none;
+  text-align: right;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+}
+#name-card.show { display: block; }
+#name-card-main {
+  font-family: "Yellowtail", cursive;
+  font-size: 40px; line-height: 1;
+  color: #ffd9a0;
+}
+#name-card-sub {
+  font-size: 16px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #efe9dc; margin-top: 2px;
+}
+
+/* Radio card: logo mark + station + track, transient, bottom-left
+   above the radar. */
+#radio-card {
+  position: absolute; left: 16px; bottom: 232px;
+  display: none;
+  gap: 10px; align-items: center;
+}
+#radio-card.show { display: flex; }
+#radio-mark { width: 44px; height: 44px; flex: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9)); }
+#radio-name { font-size: 18px; font-weight: 600; color: #ffd23a; letter-spacing: 0.04em; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9); }
+#radio-track { font-size: 16px; color: #efe9dc; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9); }
+
+/* ---------- Subtitle, prompt, banner, toast ---------- */
+
+/* Subtitle: bare white text, bottom-centre. The speaker's name rides
+   inline, colour-coded. No panel, no portrait. */
+#subtitle {
+  position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%);
+  display: none;
+  max-width: 720px; text-align: center;
+  font-size: 20px; line-height: 1.35;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
+}
+#subtitle.show { display: block; }
 
 #prompt {
   position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%);
@@ -179,7 +245,8 @@ body.menu-open #hud { visibility: hidden; }
 }
 #banner.show { display: block; }
 #banner-title {
-  font-size: 44px; font-weight: 900; letter-spacing: 0.1em; color: #ffd23a;
+  font-family: "Passion One", "Barlow Condensed", sans-serif;
+  font-size: 64px; font-weight: 700; letter-spacing: 0.06em; color: #ffd23a;
 }
 #banner-text { font-size: 17px; line-height: 1.45; margin-top: 6px; color: #fff6e0; }
 
@@ -229,7 +296,10 @@ body.menu-open #hud { visibility: hidden; }
 }
 #arrest-wrap.show { display: block; }
 .arrest-label { font-size: 15px; font-weight: 800; letter-spacing: 0.2em; color: #ff8a7a; }
-#arrest-bar { width: 260px; margin: 8px auto 0; }
+#arrest-bar {
+  width: 260px; height: 7px; margin: 8px auto 0;
+  border-radius: 4px; background: rgba(255, 255, 255, 0.14); overflow: hidden;
+}
 #arrest-fill { height: 100%; background: #ff5a4a; width: 0%; }
 
 #score-popups {
@@ -237,7 +307,8 @@ body.menu-open #hud { visibility: hidden; }
   display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
 }
 .score-popup {
-  font-size: 18px; font-weight: 800; letter-spacing: 0.05em;
+  font-family: "Passion One", "Barlow Condensed", sans-serif;
+  font-size: 24px; font-weight: 700; letter-spacing: 0.04em;
   color: #7ae08a; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
   animation: popup-rise 2.2s ease-out forwards;
 }
@@ -262,7 +333,8 @@ body.menu-open #hud { visibility: hidden; }
 }
 .end-screen.show { display: flex; }
 .end-title {
-  font-size: 120px; font-weight: 900; letter-spacing: 0.18em;
+  font-family: "Passion One", "Barlow Condensed", sans-serif;
+  font-size: 120px; font-weight: 700; letter-spacing: 0.18em;
   color: #d8d2c4; text-shadow: 0 6px 30px rgba(0, 0, 0, 0.9);
 }
 .end-sub { font-size: 20px; color: #efe9dc; margin-top: 8px; }
@@ -280,7 +352,8 @@ body.menu-open #hud { visibility: hidden; }
   max-width: 560px;
 }
 #game-title {
-  font-size: 84px; font-weight: 900; letter-spacing: 0.06em; line-height: 0.95;
+  font-family: "Passion One", "Barlow Condensed", sans-serif;
+  font-size: 84px; font-weight: 700; letter-spacing: 0.06em; line-height: 0.95;
   color: #ffd23a;
   text-shadow: 0 4px 30px rgba(255, 120, 40, 0.45);
 }
@@ -318,9 +391,23 @@ body.menu-open #hud { visibility: hidden; }
 #pause-menu.show { display: flex; }
 .pause-inner { text-align: center; }
 .pause-title {
-  font-size: 64px; font-weight: 900; letter-spacing: 0.2em; color: #ffd23a;
-  margin-bottom: 28px;
+  font-family: "Passion One", "Barlow Condensed", sans-serif;
+  font-size: 64px; font-weight: 700; letter-spacing: 0.2em; color: #ffd23a;
+  margin-bottom: 18px;
 }
+/* The pause stats: the numbers the HUD no longer carries. */
+#pause-stats {
+  font-size: 19px; line-height: 1.75; color: #efe9dc;
+  margin-bottom: 26px;
+}
+#pause-clock { letter-spacing: 0.14em; font-weight: 600; }
+#pause-mission { color: #ffd23a; font-weight: 600; letter-spacing: 0.06em; }
+#pause-stage { color: #c8bfa8; font-size: 16px; letter-spacing: 0.1em; }
+#pause-stage .pip { color: #6a6355; margin-left: 3px; }
+#pause-stage .pip.done { color: #ff9a4a; }
+#pause-goal { color: #c8bfa8; font-size: 17px; }
+#pause-rep { color: #ffd23a; }
+#pause-postcards { color: #ffd9a0; }
 .pause-inner .menu-buttons { justify-content: center; }
 
 #hint {
