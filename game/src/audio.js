@@ -1,6 +1,6 @@
 // The soundscape: synthesized WebAudio, no audio files.
 //
-// One job: make Solmar Bay sound like somewhere — an engine hum that
+// One job: make Puerto del Sol sound like somewhere — an engine hum that
 // follows speed, a two-tone siren when the heat is on, gunshots, crashes,
 // UI blips, mission stings, and three invented radio stations that play
 // generative pluck melodies. Everything is synthesized at runtime; the
