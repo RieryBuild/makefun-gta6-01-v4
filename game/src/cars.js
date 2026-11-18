@@ -1,6 +1,6 @@
 // Vehicles: multi-part cars with readable silhouettes and police livery.
 //
-// One job: build the cars — sports, sedan, pickup, van, taxi and the SBPD
+// One job: build the cars — sports, sedan, pickup, van, taxi and the PSPD
 // cruiser — as modelled shapes, never a single rounded box: a distinct
 // hood, a glass cabin, cylinder wheels with hubs, headlights and
 // taillights, bumpers, mirrors and a grille.
@@ -8,7 +8,7 @@
 // The police fix, stated once: v3's cruisers read as brown boxes at
 // distance — the livery was too subtle and the light bar too dim. v4's
 // cruiser is two-tone (white doors + roof over a black body), wears the
-// SBPD door decal on both sides, and carries a roof bar whose red and blue
+// PSPD door decal on both sides, and carries a roof bar whose red and blue
 // halves flash ALTERNATELY at full emissive, with a glow sprite that
 // pulses with them. At 50 m the flash, not the decal, is what reads.
 
@@ -24,8 +24,8 @@ export const CAR_NAMES = {
   sedan: 'Coral Sedan',
   pickup: 'Bay Hauler',
   van: 'Rusty Van',
-  taxi: 'Solmar Cab',
-  police: 'SBPD Interceptor',
+  taxi: 'Del Sol Cab',
+  police: 'PSPD Interceptor',
 };
 
 function paintMaterial(colour, metalness = 0.55) {
@@ -121,6 +121,24 @@ export function createCar(rng, type, colour) {
     trunk.position.set(0, dims.bodyY + dims.bodyH / 2 + 0.01, -dims.l / 2 + 0.6);
     trunk.rotation.x = 0.08;
     group.add(trunk);
+  }
+
+  // Door seams + chrome side trim: two thin dark lines down each flank
+  // so the body reads as panels instead of one box, and a bright strip
+  // under them — the one chrome line every GTA car wears at dusk.
+  const seamMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.9 });
+  for (const side of [-1, 1]) {
+    for (const seamZ of [-0.6, 0.9]) {
+      const seam = new THREE.Mesh(new THREE.BoxGeometry(0.02, dims.bodyH * 0.7, 0.05), seamMat);
+      seam.position.set(side * (dims.w / 2 + 0.005), dims.bodyY, seamZ);
+      group.add(seam);
+    }
+    const trim = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.07, dims.l * 0.7),
+      new THREE.MeshStandardMaterial({ color: 0xd8d8d8, roughness: 0.25, metalness: 0.9 }),
+    );
+    trim.position.set(side * (dims.w / 2 + 0.01), dims.bodyY - dims.bodyH / 2 + 0.16, 0.1);
+    group.add(trim);
   }
 
   // Cabin: glass all round with a painted roof.
@@ -223,13 +241,29 @@ export function createCar(rng, type, colour) {
   );
   grille.position.set(0, dims.bodyY + 0.02, dims.l / 2 + 0.02);
   group.add(grille);
+  // Rear detail, for the chase cam: twin exhausts and a license plate.
+  // The chase frame looks at the car's rear from 6.8 m, and v4's rear
+  // was a flat stack of boxes — the pipes and the plate break it up.
+  const exhaustMat = new THREE.MeshStandardMaterial({ color: 0x8a8f96, roughness: 0.35, metalness: 0.8 });
+  for (const side of [-1, 1]) {
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.25, 8), exhaustMat);
+    pipe.rotation.x = Math.PI / 2;
+    pipe.position.set(side * (dims.w / 2 - 0.4), dims.bodyY - dims.bodyH / 2 + 0.14, -dims.l / 2 - 0.08);
+    group.add(pipe);
+  }
+  const plate = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.16, 0.03),
+    new THREE.MeshStandardMaterial({ color: 0xf2f0e8, roughness: 0.6 }),
+  );
+  plate.position.set(0, dims.bodyY + 0.05, -dims.l / 2 - 0.03);
+  group.add(plate);
   for (const side of [-1, 1]) {
     const mirror = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.2), bodyMat);
     mirror.position.set(side * (dims.w / 2 + 0.05), dims.cabY - 0.1, isVan ? dims.l / 2 - 1.6 : 0.7);
     group.add(mirror);
   }
 
-  // ---- Police livery: white doors with the SBPD decal + light bar ----
+  // ---- Police livery: white doors with the PSPD decal + light bar ----
   let lightBar = null;
   if (isPolice) {
     const doorTex = policeDoor();
