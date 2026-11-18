@@ -161,5 +161,14 @@ export function buildGround(scene, rng) {
   beach.receiveShadow = true;
   scene.add(beach);
 
+  // The eastern shore: a sand band along the waterline east of the docks,
+  // so the sea edge reads as a beach from the yard instead of a cliff of
+  // grass meeting the water.
+  const shore = new THREE.Mesh(new THREE.PlaneGeometry(14, CITY_HALF * 2 + 60), sandMat);
+  shore.rotation.x = -Math.PI / 2;
+  shore.position.set(WATERLINE.eastX - 6, 0.05, 0);
+  shore.receiveShadow = true;
+  scene.add(shore);
+
   return { groundHeight, asphaltTexture: asphalt(rng) };
 }
