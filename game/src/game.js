@@ -16,7 +16,7 @@
 import {
   ARMOUR_MAX, ARMOUR_PICKUP_VALUE, ARMOUR_SPOTS, CAMERA_TUNING,
   GARAGE_FORECOURT, GOAL_CASH, GOLDEN_HOUR, HEAT_RULES, HERO_STATS,
-  HOSPITAL_DOOR, REP_AWARDS, SPAWN_POINT, STATION_DOOR,
+  HOSPITAL_DOOR, REP_AWARDS, SPAWN_POINT, STATION_DOOR, TITLE,
 } from './config.js';
 import { makeSeededRandom } from './seed.js';
 import { Input } from './input.js';
@@ -35,6 +35,7 @@ import { Collectibles } from './collectibles.js';
 import { Hud } from './hud.js';
 import { Minimap } from './minimap.js';
 import { Soundscape } from './audio.js';
+import { glowPool, smokePuff } from './textures.js';
 
 const CLOCK_MINUTES_PER_SECOND = 1 / 6; // one game minute per six real seconds
 const AUTOSAVE_EVERY = 30;
@@ -77,6 +78,9 @@ export class Game {
     this.endTimer = 0;
     this.endKind = null;
     this.smoke = [];
+    this.dustTimer = 0;
+    this.helpedDriving = false;
+    this.helpedAiming = false;
     this.menuAngle = 0.6;
     window.addEventListener('resize', () => this.onResize());
     this.build(seed);
@@ -134,8 +138,10 @@ export class Game {
       );
       strap.position.y = 1.25;
       group.add(strap);
+      // The glow MUST carry the radial texture: a map-less sprite is a
+      // solid square, and v4's vest glow was a cyan rectangle in frame.
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({
-        color: 0x7ae0ff, transparent: true, opacity: 0.4,
+        map: glowPool(), color: 0x7ae0ff, transparent: true, opacity: 0.4,
         blending: THREE.AdditiveBlending, depthWrite: false,
       }));
       glow.scale.set(2, 2, 1);
@@ -223,7 +229,7 @@ export class Game {
     this.audio.startRadio();
     this.hud.hideStart();
     this.hud.hideEndScreens();
-    this.hud.showToast('Save restored — welcome back to Solmar Bay');
+    this.hud.showToast('Save restored — welcome back to Puerto del Sol');
     this.refreshHud();
   }
 
@@ -296,11 +302,15 @@ export class Game {
     );
     this.hud.setAmmo(this.weapons.ammo, this.weapons.reloading);
     const mission = this.missions.active ? this.missions.active.def : this.missions.nextMission();
-    this.hud.setMissionName(mission ? mission.title.toUpperCase() : 'SOLMAR BAY');
+    this.hud.setMissionName(mission ? mission.title.toUpperCase() : TITLE);
     this.hud.setObjective(this.missions.objectiveText());
     this.hud.setStagePips(this.missions.stageProgress());
-    this.hud.setResponse(this.responseUnits(), this.police.stars);
     this.hud.setRadio(this.audio.currentStation());
+    // The radar carries the police picture now (the response table is
+    // deleted): wanted stars flash the rim red/blue, and when the
+    // player is hidden — heat on, no unit within 45 m — a search ring
+    // shows the area to escape.
+    const nearest = this.nearestPoliceDistance();
     this.minimap.draw({
       playerX: this.player.x,
       playerZ: this.player.z,
@@ -311,6 +321,9 @@ export class Game {
       police: this.police.blips(),
       enemies: this.weapons.enemyPositions(),
       postcards: this.collectibles.remaining(),
+      wanted: this.police.stars,
+      hidden: this.police.stars > 0 && nearest > 45,
+      time: this.time,
     });
   }
 
@@ -426,6 +439,7 @@ export class Game {
         this.carCondition = Math.max(0, this.carCondition - 0.03);
         this.audio.crash(8);
         this.spawnSmoke(pos.x, pos.z);
+        this.player.addShake(0.25);
       },
       onRamPerson: () => {
         this.damagePlayer(12);
@@ -501,13 +515,30 @@ export class Game {
   }
 
   spawnSmoke(x, z) {
+    // The smoke MUST carry the feathered puff texture: v4 spawned
+    // map-less sprites, and fifteen of them trailed the hero car in the
+    // chase frame as solid pale rectangles (measured, not guessed).
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-      color: 0x8a8078, transparent: true, opacity: 0.5, depthWrite: false,
+      map: smokePuff(), color: 0x8a8078, transparent: true, opacity: 0.5,
+      depthWrite: false,
     }));
     sprite.scale.set(2, 2, 1);
     sprite.position.set(x, 1, z);
     this.scene.add(sprite);
     this.smoke.push({ sprite, timer: 1.2 });
+  }
+
+  // Drift dust: a smaller, warmer puff kicked up at the rear wheels while
+  // the car slides. Same feathered texture, same update path as smoke.
+  spawnDust(x, z) {
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: smokePuff(), color: 0xc8b08a, transparent: true, opacity: 0.35,
+      depthWrite: false,
+    }));
+    sprite.scale.set(1.4, 1.4, 1);
+    sprite.position.set(x, 0.6, z);
+    this.scene.add(sprite);
+    this.smoke.push({ sprite, timer: 0.9 });
   }
 
   updateSmoke(dt) {
@@ -546,6 +577,12 @@ export class Game {
       this.carCondition = 1;
       this.onCrime('theft', 1);
       this.audio.blip(520, 0.08, 0.1);
+      // One-shot help: the first car teaches the handbrake, once, and
+      // never again. The help box is transient by design.
+      if (!this.helpedDriving) {
+        this.helpedDriving = true;
+        this.hud.showHelp('SPACE — handbrake · hold it in a turn to drift for REP');
+      }
     }
   }
 
@@ -611,10 +648,6 @@ export class Game {
     }
   }
 
-  responseUnits() {
-    return this.police.responseList(this.player.x, this.player.z);
-  }
-
   update(dt) {
     // The menu panorama: the world lives (clouds, wheel, sea) while the
     // camera orbits the city — the title screen sells the game.
@@ -653,8 +686,9 @@ export class Game {
       document.getElementById('btn-mute').textContent = muted ? 'Sound: OFF' : 'Sound: ON';
     }
     if (this.input.tapped('KeyN')) {
+      // The radio card IS the feedback (station logo + name + track, 4 s);
+      // a toast on top of it would double-announce the switch.
       this.hud.setRadio(this.audio.nextStation());
-      this.hud.showToast(this.audio.currentStation().name);
     }
     if (this.input.tapped('KeyR')) this.weapons.startReload();
     if (this.input.tapped('KeyE')) this.handleInteract();
@@ -666,6 +700,7 @@ export class Game {
         this.carCondition = Math.max(0, this.carCondition - impact * 0.004);
         this.audio.crash(impact);
         this.spawnSmoke(this.player.x, this.player.z);
+        this.player.addShake(Math.min(0.5, impact * 0.02));
       },
       onDrift: () => {
         this.addRep(REP_AWARDS.drift);
@@ -685,6 +720,11 @@ export class Game {
     }
     this.player.updateCamera(this.camera, dt);
     this.hud.setCrosshairVisible(this.player.aiming && !this.player.inCar);
+    // One-shot help: the first aim teaches fire + reload, once.
+    if (this.player.aiming && !this.helpedAiming) {
+      this.helpedAiming = true;
+      this.hud.showHelp('Left-click — fire · R — reload');
+    }
     if (this.input.fireDown) this.tryShoot();
     // The world answers.
     this.traffic.update(dt, {});
@@ -698,13 +738,30 @@ export class Game {
       onPickup: (card, reward, found, total) => {
         this.cash += reward;
         this.addRep(REP_AWARDS.postcard);
-        this.hud.showScorePopup(`POSTCARD +$${reward}`, 'cash');
+        // Postcard icon + count + cash in one transient popup — the
+        // permanent postcard counter panel is gone.
+        this.hud.showScorePopup(`✉ ${found}/${total} · +$${reward}`, 'cash');
         this.hud.showToast(`${card.name} — postcard ${found}/${total}`);
         this.audio.blip(990, 0.15, 0.14);
       },
     });
     this.updateArmourVests(dt);
     this.resolveCarContacts();
+    // Drift dust: while the car slides, kick up a puff at the rear wheels
+    // every tenth of a second.
+    if (this.player.inCar && this.player.drifting) {
+      this.dustTimer -= dt;
+      if (this.dustTimer <= 0) {
+        this.dustTimer = 0.1;
+        const car = this.player.inCar.car;
+        const pos = car.group.position;
+        const heading = car.group.rotation.y;
+        this.spawnDust(
+          pos.x - Math.sin(heading) * car.length * 0.4,
+          pos.z - Math.cos(heading) * car.length * 0.4,
+        );
+      }
+    }
     this.updateSmoke(dt);
     this.sky.update(dt);
     this.dressing.update(dt, this.time);
