@@ -140,15 +140,47 @@ export function bossLook() {
   };
 }
 
+// Four palette families, so the crowd reads as a city's worth of people
+// instead of one random wardrobe: beach brights, workwear, docks and
+// night-out. Each family pairs its shirts with its own trousers and shoes,
+// and scales vary wider (0.92–1.06) for real silhouette variety.
+const PED_FAMILIES = [
+  { // Beach brights: loud shirts, light shorts, sandals.
+    shirts: [0xe85a5a, 0x2ab8c8, 0xe8c84a, 0xe87aa0, 0x4ac88a],
+    trousers: [0xe8e0d0, 0xc8d8e8, 0xe8d8c0],
+    shoes: [0x8a6a44, 0x5a4a3a],
+    hatChance: 0.3, hairStyles: ['short', 'ponytail', 'ponytail', 'bun'],
+  },
+  { // Workwear: muted shirts, dark trousers, boots.
+    shirts: [0x6a7a5a, 0x8a7a5a, 0x5a6a8a, 0x7a7a7a, 0x4a5a6a],
+    trousers: [0x2e3138, 0x4a3a2e, 0x2a3a4a],
+    shoes: [0x3a2e22, 0x2a2a2a],
+    hatChance: 0.35, hairStyles: ['short', 'short', 'bun'],
+  },
+  { // Docks: dark shirts, dark trousers, caps.
+    shirts: [0x2a3a5c, 0x5a2a2a, 0x2a4a3a, 0x3a3f46],
+    trousers: [0x1e2430, 0x2e3138, 0x2a2a2a],
+    shoes: [0x2a2a2a, 0x3a2e22],
+    hatChance: 0.5, hairStyles: ['short', 'short', 'short'],
+  },
+  { // Night-out: dark shirts with one bright accent, dark trousers.
+    shirts: [0x1e1e22, 0x4a1e2a, 0x1e2a4a, 0x2a1e4a, 0x8a2f2f],
+    trousers: [0x1a1c22, 0x2e3138, 0x14161f],
+    shoes: [0x141414, 0x2a2a2a],
+    hatChance: 0.05, hairStyles: ['slick', 'short', 'ponytail'],
+  },
+];
+
 export function pedLook(rng) {
-  const shirts = [0xe8a0a0, 0xa0c8e8, 0xe8d8a0, 0xa0e8c0, 0xd8a0e8, 0xf0f0e8, 0x8ac8d8, 0xe8b88a];
-  const trousers = [0x2e3138, 0x4a3a2e, 0x3a4a5a, 0x5a5a5a, 0x2a3a4a];
+  const family = rng.pick(PED_FAMILIES);
   return {
     skin: rng.pick([0xd9a077, 0xb87a52, 0x8a5a3a, 0xe8b88a, 0xf0c8a0]),
     hair: rng.pick([0x2e2620, 0x5a3a22, 0x1e1a16, 0x8a6a3a, 0x6a6a6a]),
-    hairStyle: rng.pick(['short', 'short', 'ponytail', 'bun']),
-    shirt: rng.pick(shirts), shirtAlt: 0xffffff, trousers: rng.pick(trousers), shoes: rng.pick([0x3a2e22, 0x2a2a2a, 0x5a4a3a]),
-    hat: rng.chance(0.2) ? 'cap' : null, scale: rng.between(0.94, 1.04),
+    hairStyle: rng.pick(family.hairStyles),
+    shirt: rng.pick(family.shirts), shirtAlt: 0xffffff,
+    trousers: rng.pick(family.trousers), shoes: rng.pick(family.shoes),
+    hat: rng.chance(family.hatChance) ? 'cap' : null,
+    scale: rng.between(0.92, 1.06),
   };
 }
 
