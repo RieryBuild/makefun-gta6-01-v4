@@ -1,0 +1,124 @@
+# SOLMAR BAY — an open-world crime game at golden hour
+
+[![make.fun](https://img.shields.io/badge/make.fun-gta6--01-orange)](https://make.fun/competitions/gta6-01)
+[![entry](https://img.shields.io/badge/entry-round%204-blue)](https://github.com/RieryBuild/makefun-gta6-01-v4)
+
+Dana Vega runs courier jobs out of Rosa's garage on Marlin Street. The
+Dockside Kings want the garage — fifty thousand dollars of "protection" or
+they torch it. Dana has one week, one battered van, and no plans to pay.
+
+SOLMAR BAY is an open-world crime game in the spirit of GTA 6, built in
+Three.js for the desktop web browser: a full city to drive and walk, a
+five-mission story, a police response that escalates from one cruiser to a
+helicopter, and a sunset that never quite sets.
+
+This is the round-4 rebuild of the entry: the game systems are the same as
+round 3's, but every line of code was written fresh, and the art layer was
+rebuilt to close the graphics gap with the leaderboard's top three — a
+visible sun disc and drifting clouds, a dressed working docks yard, police
+livery that reads at distance, and a helicopter you can actually see.
+
+## What's in the game
+
+- **A city that reads as a place**: 49 blocks of coherent buildings
+  (aligned window grids, one palette per building), palm-lined streets,
+  a beach with umbrellas and a lifeguard tower, three piers, a Ferris
+  wheel, a striped lighthouse with a sweeping beam, and a working docks
+  yard — gantry cranes, container rows, a forklift, oil stains.
+- **A five-mission story** (First Delivery → Hot Wheels → Dockside Heat →
+  The Getaway → Harbor Showdown) worth $49,800 plus the $250 start cash:
+  finishing the story raises the $50,000 that saves the garage.
+- **A police response with names**: SBPD cruisers (SNAPPER-11, MARLIN-10,
+  …), officers on foot who can arrest Dana, and the GULL-1 helicopter
+  from three stars. Wanted stars decay when Dana breaks line of sight.
+- **BUSTED and WASTED with exact accounting**: a $200 fine and a respawn
+  at the SBPD steps, or a $150 fine and a respawn at Solmar General.
+- **Systems that keep score**: REP ranks (New in Town → Bay Legend),
+  10 postcards worth $200 each, armour vests, a radio with three
+  generative stations, a round minimap, autosave with Continue, and a
+  pause menu that actually pauses.
+- **A golden-hour look, committed**: one orange-pink grade across sky,
+  fog, light and HUD; a visible sun disc; long shadows; and a menu
+  panorama that orbits the city while you decide.
+
+## Controls
+
+| Key | Action |
+| --- | --- |
+| WASD | Move / drive |
+| Mouse | Look (click the canvas to lock the pointer) |
+| Left-click | Shoot |
+| Right-click (hold) | Aim |
+| E | Interact — start a mission, enter/exit a car |
+| R | Reload |
+| Space | Handbrake |
+| Shift | Run |
+| N | Next radio station |
+| M | Mute |
+| P / Esc | Pause |
+
+## Run it
+
+```sh
+# Serve the game (Node 22+)
+node serve.ts
+# then open http://localhost:8080/
+```
+
+No build step, no network calls: Three.js is vendored under
+`game/vendor/`, and every texture is drawn procedurally at load.
+
+## Layout
+
+```
+main.ts            entrypoint: copies game/ + screenshots/ to /output,
+                   writes dossier.json
+serve.ts           local dev server (kit starter)
+shots.json         the four screenshot scenes
+game/
+  index.html       the page + the HUD
+  style.css        HUD and menu styling
+  vendor/three.min.js   Three.js r147, vendored
+  src/
+    boot.js        bootstrap: menus, game loop, ?shot= staging
+    config.js      tuning: the city, the sun, the cars, the heat
+    game.js        the engine: state, clock, fines, autosave
+    shots.js       the four screenshot scenes (real play, frozen)
+    sky.js         sky dome, sun disc, clouds, sea, light
+    ground.js      terrain, roads, crosswalks, beach
+    buildings.js   the five archetypes + landmarks + colliders
+    dressing.js    palms, props, Ferris wheel, lighthouse, docks yard
+    people.js      humanoids from rounded primitives + weapons
+    cars.js        the six car types + the SBPD cruiser
+    player.js      walking, driving, the camera
+    traffic.js     moving + parked cars
+    pedestrians.js the crowd: stroll, flee, get back up
+    police.js      stars, cruisers, officers, helicopter
+    weapons.js     the rifle: raycast fire, tracers, enemies
+    missions.js    the five jobs + the waypoint beacon
+    collectibles.js  the ten postcards
+    hud.js         every panel, bar, popup and screen
+    minimap.js     the round north-up map
+    audio.js       the synthesized soundscape + radio
+    input.js       keys, mouse, pointer lock
+    save.js        localStorage autosave
+    seed.js        the seeded RNG
+    textures.js    procedural canvas textures (cached)
+screenshots/       the four entry screenshots (real renders)
+```
+
+## Screenshots
+
+1. **1-chase.jpg** — a three-star pursuit down Marlin Street: the Marlin
+   GT at 79 km/h, cruisers alongside and head-on, GULL-1 overhead.
+2. **2-city.jpg** — Dana on foot at golden hour, the street vista ahead.
+3. **3-mission.jpg** — Dockside Heat at the docks yard, lighthouse whole
+   in frame.
+4. **4-combat.jpg** — the rifle raised, the tracer on its way to a King.
+
+## make.fun
+
+Built for the [gta6-01 competition](https://make.fun/competitions/gta6-01)
+on make.fun. The entry is sealed and submitted with the make.fun CLI; see
+`gate-run.md` for the pre-submit gate and `scorecard.md` for the visual
+self-assessment.
