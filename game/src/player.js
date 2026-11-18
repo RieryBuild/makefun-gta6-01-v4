@@ -44,6 +44,13 @@ export class Player {
     this.aiming = false;
     this.nearMissCooldown = 0;
     this.lastNearMissCar = null;
+    this.shake = 0; // impact shake amplitude, decays to zero
+  }
+
+  // Kick the camera on an impact: the amplitude caps at 0.6 m and decays
+  // in updateCamera. Visual only — it never moves Dana or the car.
+  addShake(amount) {
+    this.shake = Math.min(0.6, this.shake + amount);
   }
 
   reset(x, z) {
@@ -274,6 +281,17 @@ export class Player {
     const sx = Math.cos(this.cameraYaw) * shoulder;
     const sz = -Math.sin(this.cameraYaw) * shoulder;
     camera.position.set(cx + sx, Math.max(0.6, cy), cz + sz);
+    // Impact shake: a decaying random offset, strongest on the frame of
+    // the hit. The look target stays put, so the frame shudders rather
+    // than swings.
+    if (this.shake > 0.005) {
+      camera.position.x += (Math.random() - 0.5) * this.shake;
+      camera.position.y += (Math.random() - 0.5) * this.shake * 0.7;
+      camera.position.z += (Math.random() - 0.5) * this.shake;
+      this.shake *= Math.max(0, 1 - dt * 4);
+    } else {
+      this.shake = 0;
+    }
     const ahead = this.aiming ? 8 : 3;
     camera.lookAt(
       target.x + Math.sin(this.cameraYaw) * ahead + sx,
