@@ -26,16 +26,13 @@ import { createCar } from './cars.js';
 const STEP = 1 / 30;
 
 // Finish a shot: hide the briefing banner, the E prompt and the combat
-// flashes (a frozen damage flash reads as a bug), keep the dialogue (it
+// flashes (a frozen damage flash reads as a bug), keep the subtitle (it
 // is part of the frame), refresh the HUD, render.
 function finishShot(game) {
   game.hud.hideBanner();
   game.hud.hidePrompt();
   game.hud.hideCombatFx();
   game.refreshHud();
-  // The response list is only refreshed during play; staging moves units
-  // after the last update, so refresh it here to match the frozen frame.
-  game.hud.setResponse(game.responseUnits(), game.police.stars);
   game.render();
 }
 
@@ -127,7 +124,7 @@ function aimCameraAt(game, x, z) {
 
 // Compose the lighthouse into the frame: the camera yaw is set from the
 // lighthouse's bearing, so the tower lands left-of-centre and whole —
-// clear of the mission panel (top-left) and the status panel (top-right).
+// clear of the transient objective line (top-left) and the cash (top-right).
 // `offset` is how far left of centre it sits, in radians.
 function frameLighthouse(game, offset = 0.38, pitch = 0.28) {
   const dx = LIGHTHOUSE_POS.x - game.player.x;
@@ -180,16 +177,21 @@ export function stageShot(name, game, seed) {
     game.player.cameraYaw = 0; // look south down Marlin Street, toward the sun
     game.player.cameraPitch = 0.3;
     runForward(game, 5, walkAutopilot);
-    // A living street for the frame: parked cars on the kerbs ahead and
-    // two pedestrians on the sidewalks ahead of Dana. The near ped is
-    // ~13 m ahead — close enough to read as a person, not a dot; the far
-    // one anchors the beach end. (The first beach-vista frame parked one
-    // car and one ped BEHIND the camera, and the other ped behind the
-    // dialogue panel; the fourth left the near-midground empty.)
-    game.traffic.addParked(5.5, 178, 0, 'sedan');
-    game.traffic.addParked(-5.5, 170, Math.PI, 'pickup');
-    const nearPeds = game.crowd.peds.slice(0, 2);
-    const pedSpots = [[4, 168, Math.PI], [-7, 194, 0]];
+    // A living street for the frame: parked cars lining BOTH kerbs ahead
+    // and eight pedestrians on the sidewalks ahead of Dana — the revision
+    // minimum for the city frame. The near ped is ~13 m ahead, close
+    // enough to read as a person, not a dot; the far ones anchor the
+    // beach end. (The first beach-vista frame parked one car and one ped
+    // BEHIND the camera; the fourth left the near-midground empty.)
+    game.traffic.addParked(5.5, 168, 0, 'sedan');
+    game.traffic.addParked(-5.5, 178, Math.PI, 'pickup');
+    game.traffic.addParked(5.5, 195, 0, 'taxi');
+    game.traffic.addParked(-5.5, 155, Math.PI, 'van');
+    const nearPeds = game.crowd.peds.slice(0, 8);
+    const pedSpots = [
+      [10.5, 152, Math.PI], [-10.5, 160, 0], [10.5, 170, Math.PI], [-10.5, 178, 0],
+      [10.5, 188, Math.PI], [-10.5, 196, 0], [10.5, 205, Math.PI], [-10.5, 212, 0],
+    ];
     for (let i = 0; i < nearPeds.length; i += 1) {
       const ped = nearPeds[i];
       const spot = pedSpots[i];
@@ -198,7 +200,14 @@ export function stageShot(name, game, seed) {
       ped.x = spot[0];
       ped.z = spot[1];
     }
+    // The city frame's transient: the district name card. Dana ends the
+    // walk on the pavilion landmark block, so the card reads the
+    // landmark's own name — Beach Pavilion. The objective line and the
+    // m1 start subtitle are cleared — one transient per frame.
+    game.hud.showLocationNow();
     finishShot(game);
+    game.hud.hideObjective();
+    game.hud.hideSubtitle();
     return 'city';
   }
 
@@ -243,6 +252,13 @@ export function stageShot(name, game, seed) {
     game.player.cameraYaw = yaw;
     game.player.snapCamera(game.camera, yaw, 0.34, 5.5, 2.4);
     finishShot(game);
+    // The mission frame's transient is the subtitle (fresh from stage 2).
+    // The objective line, the radio card (the 1.5 s staging is shorter
+    // than its 4 s life) and the district card (the walk crosses into
+    // the pavilion block) are all cleared — one transient per frame.
+    game.hud.hideObjective();
+    game.hud.hideRadioCard();
+    game.hud.hideNameCard();
     return 'mission';
   }
 
@@ -300,12 +316,19 @@ export function stageShot(name, game, seed) {
     game.tryShoot();
     game.health = 85; // top up after the staged advance
     finishShot(game);
+    // The combat frame's transient is the KING DOWN popup. The objective
+    // line, the m3 start subtitle and the one-shot aim help are cleared
+    // individually — the blanket hide would also kill the hitmarker,
+    // which is the frame's payoff.
+    game.hud.hideObjective();
+    game.hud.hideSubtitle();
+    game.hud.hideHelp();
     // Re-show the kill's score popup for the photograph, persistent: the
     // kill's own popup is real, but its 2.2 s wall-clock life expires
     // during the slow frozen-frame render (and the rise animation never
-    // fades in at ~4 fps), so the frame would show the kill (3 left,
-    // REP +10, the body) with no popup. This is the same kill's feedback,
-    // re-timed — not a second kill, and the panel still reads 3 left.
+    // fades in at ~4 fps), so the frame would show the kill (3 enemies
+    // left, REP +10, the body) with no popup. This is the same kill's
+    // feedback, re-timed — not a second kill.
     game.hud.showScorePopup('KING DOWN', 'kill', true);
     return 'combat';
   }
@@ -346,16 +369,35 @@ export function stageShot(name, game, seed) {
   // Compose the frozen frame: officers on foot can't keep up with a car,
   // so they leave the frame (their heads were clipping the camera); one
   // cruiser comes at Dana head-on in the oncoming lane, close enough to
-  // read; a second pulls alongside on the left; the traffic that shared
-  // its sightline is moved behind the player; and the helicopter swings
-  // low and close ahead, inside the frame.
+  // read; a second pulls alongside on the left; and the helicopter swings
+  // low and close ahead, inside the frame. The street stays ALIVE — the
+  // revision minimum is four moving traffic cars and six visible peds in
+  // the chase frame, so the traffic ahead is composed, not cleared:
+  // two oncoming, two same-direction, all clear of the cruisers.
   for (const officer of game.police.officers) game.scene.remove(officer.rig.group);
   game.police.officers = [];
-  for (const entry of game.traffic.moving) {
-    const pos = entry.car.group.position;
-    if (Math.abs(pos.x) < 12 && pos.z > game.player.z && pos.z < game.player.z + 70) {
-      pos.z = game.player.z - 90;
-    }
+  const trafficSpots = [
+    [-3.5, game.player.z + 35, 0], [3.5, game.player.z + 45, Math.PI],
+    [-3.5, game.player.z + 58, 0], [3.5, game.player.z + 68, Math.PI],
+  ];
+  const moving = game.traffic.moving.slice(0, 4);
+  for (let i = 0; i < moving.length; i += 1) {
+    const pos = moving[i].car.group.position;
+    pos.set(trafficSpots[i][0], 0, trafficSpots[i][1]);
+    moving[i].car.group.rotation.y = trafficSpots[i][2];
+  }
+  // Six peds on the sidewalks ahead, watching the chase go by.
+  const chasePeds = game.crowd.peds.slice(0, 6);
+  const chasePedSpots = [
+    [10.5, 12], [-10.5, 20], [10.5, 28], [-10.5, 36], [10.5, 44], [-10.5, 50],
+  ];
+  for (let i = 0; i < chasePeds.length; i += 1) {
+    const ped = chasePeds[i];
+    const spot = chasePedSpots[i];
+    ped.x = spot[0];
+    ped.z = game.player.z + spot[1];
+    ped.rig.group.position.set(ped.x, 0, ped.z);
+    ped.rig.group.rotation.y = ped.x > 0 ? -Math.PI / 2 : Math.PI / 2;
   }
   if (game.police.cruisers.length > 0) {
     const cruiser = game.police.cruisers[0];
@@ -370,9 +412,9 @@ export function stageShot(name, game, seed) {
     alongside.car.group.rotation.y = 0;
   }
   // Every other cruiser goes behind the player, out of the frame but on
-  // the minimap and in the response list. The third cruiser was never
-  // repositioned, and the pursuit parked it right beside the camera —
-  // the fourth v4 chase shot is dominated by a police car, not the hero.
+  // the minimap. The third cruiser was never repositioned, and the
+  // pursuit parked it right beside the camera — the fourth v4 chase shot
+  // is dominated by a police car, not the hero.
   for (let i = 2; i < game.police.cruisers.length; i += 1) {
     const extra = game.police.cruisers[i];
     extra.car.group.position.set(
@@ -383,10 +425,10 @@ export function stageShot(name, game, seed) {
     const heli = game.police.heli;
     // Low over the street corridor, ahead-left: at y=10 and x=+14 the heli
     // sat behind the street-wall buildings (invisible in the first v4
-    // chase shot); at y=24 it projected behind the clock panel (second
+    // chase shot); at y=24 it projected behind the clock pill (second
     // v4 screenshots). At y=15 over the road itself (x=+8, inside the
     // street corridor the buildings never cover) it clears the traffic,
-    // sits below the clock panel, and reads against the sky.
+    // sits below the cash and stars, and reads against the sky.
     // The beacon is frozen ON: at freeze time the blink could be dim.
     const hx = game.player.x + 8;
     const hz = game.player.z + 45;
@@ -401,9 +443,16 @@ export function stageShot(name, game, seed) {
     heli.pool.position.set(game.player.x, 0.15, game.player.z);
   }
   // Lock the chase frame exactly: behind the car, looking south, at the
-  // drive camera's own distance and height.
-  game.player.snapCamera(game.camera, 0, 0.22, 7.8, 3.1);
+  // revision's lower, closer chase cam (6.8 m / 2.6 m, pitch 0.18) — the
+  // staging IS the cinematic cam for the frozen frame.
+  game.player.snapCamera(game.camera, 0, 0.18, 6.8, 2.6);
   game.carCondition = 0.85; // reset after the staged ramming
   finishShot(game);
+  // The chase frame's transient is the objective line — and ONLY the
+  // objective line. The m4 start dialogue and the district card both
+  // survive staging on their timers (the drive crosses into Centro), so
+  // every transient is cleared and the objective re-shown on its own.
+  game.hud.hideTransientFx();
+  game.hud.showObjectiveNow();
   return 'chase';
 }
