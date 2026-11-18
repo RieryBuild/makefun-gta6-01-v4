@@ -1,9 +1,14 @@
-// The minimap: a round north-up map of Solmar Bay.
+// The minimap: a round north-up map of Puerto del Sol.
 //
 // One job: show the city at a glance — streets, water, beach and parks on
 // a static layer painted once, then the live layer each frame: Dana's
 // arrow, the waypoint diamond, police blips, enemy blips and the postcards
 // still out there. The canvas is round (the CSS clips it); north is up.
+//
+// The radar is also the police picture, now that the response table is
+// gone: while wanted, the rim flashes red/blue, the police blips flash,
+// and when Dana is hidden — heat on, no unit within 45 m — a search ring
+// shows the area she has to escape.
 
 import { CITY_HALF, ROAD_LINES, WATERLINE } from './config.js';
 
@@ -108,14 +113,19 @@ export class Minimap {
       ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Police: blue dots (the heli is a bigger one).
+    // Police: blue dots (the heli is a bigger one). While wanted they
+    // flash — the blink is what reads as "the hunt is on" at a glance.
+    const flash = Math.sin((view.time || 0) * 7) > 0;
     for (const blip of view.police || []) {
       const p = this.toMap(blip.x, blip.z);
-      ctx.fillStyle = blip.kind === 'heli' ? '#7ae0ff' : '#3a7aff';
+      const base = blip.kind === 'heli' ? '#7ae0ff' : '#3a7aff';
+      ctx.fillStyle = base;
+      ctx.globalAlpha = view.wanted > 0 && flash ? 1 : (view.wanted > 0 ? 0.45 : 1);
       ctx.beginPath();
       ctx.arc(p.x, p.y, blip.kind === 'heli' ? 4 : 3, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
     // Waypoint: a yellow diamond.
     if (view.waypoint) {
       const p = this.toMap(view.waypoint.x, view.waypoint.z);
@@ -145,9 +155,24 @@ export class Minimap {
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.restore();
-    // Round frame ring.
-    ctx.strokeStyle = 'rgba(232,226,212,0.8)';
-    ctx.lineWidth = 2;
+    // Search ring: while hidden, a dashed circle shows the 45 m search
+    // area around Dana — escape it and the heat cools.
+    if (view.hidden) {
+      const scale = s / (MAP_HALF * 2);
+      ctx.strokeStyle = 'rgba(255,90,74,0.85)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath();
+      ctx.arc(me.x, me.y, 45 * scale, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    // Round frame ring — flashing red/blue while wanted, calm otherwise.
+    const rimFlash = Math.sin((view.time || 0) * 7) > 0;
+    ctx.strokeStyle = view.wanted > 0
+      ? (rimFlash ? 'rgba(255,60,50,0.95)' : 'rgba(60,110,255,0.95)')
+      : 'rgba(232,226,212,0.8)';
+    ctx.lineWidth = view.wanted > 0 ? 3 : 2;
     ctx.beginPath();
     ctx.arc(s / 2, s / 2, s / 2 - 1, 0, Math.PI * 2);
     ctx.stroke();
