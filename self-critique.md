@@ -1,4 +1,8 @@
-# Self-critique — SOLMAR BAY v4
+# Self-critique — PUERTO DEL SOL (v4 revision)
+
+The v4 cycles below are preserved as history. The revision cycles (R1–)
+follow the same rule: Reza's verbatim prompt, cycles until a full cycle
+finds no material weakness.
 
 Reza's verbatim prompt, applied after each screenshot round:
 
@@ -100,5 +104,83 @@ the full re-shoot. Findings:
   dressed docks. The popup's orange-on-orange contrast is moderate —
   readable (the text-shadow carries it), not striking. A brighter kill
   colour would help, but it is a polish nit, not a material weakness.
+
+**No material weakness found. Stopping here per the house rule.**
+
+---
+
+## Revision cycle R1 — the four revised frames (2026-11-18 ~20:55 WITA)
+
+Reviewed the four revised frames (chase / city / mission / combat) after
+the HUD rebuild, the rect fix, the rename and the street-life pass. The
+revision's goals held: the rect is gone in chase and mission, the HUD is
+icons/bars/bare numbers (word counts 10 / 6 / 5 / 4 against the ≤10
+target), and every frame carries exactly one transient. Four material
+weaknesses found:
+
+1. **Sun-facing facades blow out.** The pavilion in the mission frame is
+   a near-white mass in direct sun — the first revision pass used pale
+   peach and it still washed out. Fix: the pavilion palette deepened to
+   terracotta (#e0a878 base, #c08a5a trim), which holds its windows in
+   direct sun and matches the Deco beachfront row.
+2. **The palm fronds read as wireframe.** The frond texture drew each
+   leaflet as a 5 px stroke; against the bright sky the gaps showed
+   through and the palms looked like green X-ray fans in three of the
+   four frames. Fix: each leaflet is now a filled tapered triangle —
+   26 of them tile into a solid frond with a darker rib.
+3. **The chase car's rear is a flat stack of boxes.** The chase cam looks
+   at the rear from 6.8 m and v4's rear had no detail below the spoiler.
+   Fix: twin exhaust pipes and a license plate break up the rear.
+4. **The README and a staging comment misnamed the city card.** Both said
+   the city frame's district card reads "Playa del Sol" — Dana ends the
+   walk on the pavilion landmark block, so the card reads the landmark's
+   own name, "Beach Pavilion". Fix: both corrected (the landmark-name
+   feature working as designed, the words wrong).
+
+Considered and dropped:
+
+- *The Ferris wheel is cropped at the city frame's left edge.* Its
+  bearing from Dana (~0.71 rad) sits outside the half-FOV, so only its
+  right edge shows. Pulling it whole into frame means yawing the camera
+  ~0.3 rad, which pushes the street vista — the frame's subject —
+  off-centre and changes Dana's walk path and end block. A landmark
+  peeking in at the edge is a composition, not a mistake. No change.
+- *The REP bar at 0% reads as an empty track.* Genre-faithful: GTA V's
+  special bar at 0 is also an empty track. No change.
+- *The combat muzzle flash is a big white blob.* It is a flash — it
+  should be bright, and it reads as one. No change.
+
+Verification (re-shoot round, same day): all four fixes confirmed in
+the new frames. The palms are solid green fans (city, mission, chase);
+the exhausts and the plate read on the chase car's rear; the README and
+the staging comment name Beach Pavilion. The pavilion improved from a
+white mass to warm cream with faint windows — still sun-washed, because
+the sun disc sits directly behind its roofline from this camera angle
+and the glare, not the palette, is doing the washing. That is now a
+polish nit, not a material weakness: the building reads as a building
+(shape, roof, windows faintly visible), and the frame's subject (Dana +
+prize car + wheel + subtitle) reads clearly. A deeper fix would mean
+retuning the exposure or moving the sun — global changes that risk all
+four frames for one building's windows.
+
+## Revision cycle R2 — the re-shot set (2026-11-18 ~21:10 WITA)
+
+Reviewed the final set after the R1 fixes. Findings:
+
+- The chase cover: hero car subject with exhausts and plate, heli in
+  frame, two cruisers ahead, traffic and peds on the street, objective
+  line the one transient, no rectangle. No weakness.
+- The city frame: solid palms, sun disc, Ferris wheel peeking in
+  upper-left, Dana, kerb-lined cars, peds ahead, Beach Pavilion card
+  the one transient. No weakness.
+- The mission frame: Dana beside the prize car, soft beacon (diamond +
+  glow, no hard column), wheel above the roofline, subtitle the one
+  transient. The pavilion is sun-washed (see R1) — a nit, not material.
+- The combat frame: tracer, kill, KING DOWN, hitmarker, body,
+  lighthouse whole, DEL SOL LINE containers, the freighter behind. No
+  weakness.
+- Word counts: chase 10, city 6, mission 5, combat 4 — all at or under
+  the ≤10 target. The HUD is icons, bars and bare numbers in every
+  frame; Reza's verdict ("HUD masih kebanyakan text") is answered.
 
 **No material weakness found. Stopping here per the house rule.**
