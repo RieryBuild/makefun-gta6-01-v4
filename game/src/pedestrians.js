@@ -19,15 +19,27 @@ function sidewalkPoint(rng) {
   return { x: line + side * 10.5, z: at };
 }
 
+// Six of the city's peds stand instead of stroll: two chat pairs (two
+// people facing each other, idle) and two phone starers (head down, a
+// phone in hand). Standing people are what make a sidewalk read as lived
+// in — a crowd where everyone walks looks like an evacuation.
+const STANDING_PEDS = 6;
+
 export class Pedestrians {
   constructor(scene, rng, colliders) {
     this.scene = scene;
     this.rng = rng;
     this.colliders = colliders;
     this.peds = [];
-    for (let i = 0; i < CITY_LIFE.peds; i += 1) {
+    for (let i = 0; i < CITY_LIFE.peds - STANDING_PEDS; i += 1) {
       this.spawn(sidewalkPoint(rng));
     }
+    // Two chat pairs on the sidewalks.
+    this.spawnChatPair(sidewalkPoint(rng));
+    this.spawnChatPair(sidewalkPoint(rng));
+    // Two phone starers, head down over a tiny phone.
+    this.spawnPhoneStarer(sidewalkPoint(rng));
+    this.spawnPhoneStarer(sidewalkPoint(rng));
     // Two dock workers on the apron, for life in the yard.
     this.spawn({ x: 200, z: -40 });
     this.spawn({ x: 216, z: 30 });
@@ -46,12 +58,48 @@ export class Pedestrians {
       z: point.z,
       heading: this.rng.between(0, Math.PI * 2),
       speed: 0,
+      gait: this.rng.between(0.85, 1.2),
       state: 'stroll',
       target: sidewalkPoint(this.rng),
       panicTimer: 0,
       downTimer: 0,
     };
     this.peds.push(ped);
+    return ped;
+  }
+
+  spawnChatPair(point) {
+    // Two peds a step apart, facing each other, standing still.
+    const a = this.spawn(point);
+    const b = this.spawn({ x: point.x + 1.2, z: point.z + 0.4 });
+    a.state = 'stand';
+    b.state = 'stand';
+    a.heading = Math.atan2(b.x - a.x, b.z - a.z);
+    b.heading = Math.atan2(a.x - b.x, a.z - b.z);
+    a.rig.group.rotation.y = a.heading;
+    b.rig.group.rotation.y = b.heading;
+    return [a, b];
+  }
+
+  spawnPhoneStarer(point) {
+    const ped = this.spawn(point);
+    ped.state = 'stand';
+    // Head tilted down at the phone, and a phone box in the right hand.
+    ped.rig.head.rotation.x = 0.45;
+    const phone = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.13, 0.015),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.4, metalness: 0.4 }),
+    );
+    phone.position.set(0, -0.4, 0.09);
+    phone.rotation.x = -0.5;
+    ped.rig.armR.elbow.add(phone);
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.06, 0.11),
+      new THREE.MeshBasicMaterial({ color: 0x9ad8ff }),
+    );
+    screen.position.set(0, -0.4, 0.1);
+    screen.rotation.x = -0.5;
+    ped.rig.armR.elbow.add(screen);
     return ped;
   }
 
@@ -101,6 +149,15 @@ export class Pedestrians {
           ped.target = sidewalkPoint(this.rng);
         }
       }
+      if (ped.state === 'stand') {
+        // Standing still: idle in place. (Gunfire still scares them —
+        // panicNear flips them to 'flee' like everyone else.)
+        ped.speed = 0;
+        ped.rig.group.position.set(ped.x, 0, ped.z);
+        ped.rig.group.rotation.y = ped.heading;
+        animateHumanoid(ped.rig, dt, 0, false);
+        continue;
+      }
       const dx = ped.target.x - ped.x;
       const dz = ped.target.z - ped.z;
       const dist = Math.hypot(dx, dz);
@@ -108,7 +165,7 @@ export class Pedestrians {
         ped.target = ped.state === 'flee' ? sidewalkPoint(this.rng) : sidewalkPoint(this.rng);
         ped.speed = 0;
       } else {
-        const topSpeed = ped.state === 'flee' ? CITY_LIFE.pedFlee : CITY_LIFE.pedWalk;
+        const topSpeed = (ped.state === 'flee' ? CITY_LIFE.pedFlee : CITY_LIFE.pedWalk) * ped.gait;
         ped.speed = topSpeed;
         const targetHeading = Math.atan2(dx, dz);
         let diff = targetHeading - ped.heading;
