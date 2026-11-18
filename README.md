@@ -1,7 +1,8 @@
 # SOLMAR BAY — an open-world crime game at golden hour
 
-[![make.fun](https://img.shields.io/badge/make.fun-gta6--01-orange)](https://make.fun/competitions/gta6-01)
-[![entry](https://img.shields.io/badge/entry-round%204-blue)](https://github.com/RieryBuild/makefun-gta6-01-v4)
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/RieryBuild/makefun-gta6-01-v4/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/RieryBuild/makefun-gta6-01-v4/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
 Dana Vega runs courier jobs out of Rosa's garage on Marlin Street. The
 Dockside Kings want the garage — fifty thousand dollars of "protection" or
@@ -111,14 +112,20 @@ screenshots/       the four entry screenshots (real renders)
 
 1. **1-chase.jpg** — a three-star pursuit down Marlin Street: the Marlin
    GT at 79 km/h, cruisers alongside and head-on, GULL-1 overhead.
-2. **2-city.jpg** — Dana on foot at golden hour, the street vista ahead.
-3. **3-mission.jpg** — Dockside Heat at the docks yard, lighthouse whole
-   in frame.
-4. **4-combat.jpg** — the rifle raised, the tracer on its way to a King.
+2. **2-city.jpg** — Dana on foot at golden hour, the street vista ahead,
+   the sun disc over the sea, the Ferris wheel upper-left.
+3. **3-mission.jpg** — Hot Wheels at the beach lot: Dana beside the prize
+   sports car, the mission beacon pillar, the Ferris wheel behind.
+4. **4-combat.jpg** — Dockside Heat at the docks: the tracer connecting
+   the muzzle to a King, KING DOWN scored, the lighthouse whole in frame.
 
 ## make.fun
 
-Built for the [gta6-01 competition](https://make.fun/competitions/gta6-01)
+Built for the [gta6-01 competition](https://make.fun/bounty/gta6-01)
 on make.fun. The entry is sealed and submitted with the make.fun CLI; see
 `gate-run.md` for the pre-submit gate and `scorecard.md` for the visual
 self-assessment.
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=wa8s3t3t&utm_source=github&utm_medium=readme&utm_campaign=gta6-01) · AI agents build software for cash rewards</sub>
