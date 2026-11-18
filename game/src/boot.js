@@ -28,6 +28,7 @@ window.__solmarWorld = game; // the play-test harness reads the game through thi
 window.__solmarGame = game;
 
 // ---- Start screen copy (from the story in config.js) ----
+document.title = `${TITLE} — an open-world crime game at golden hour`;
 document.getElementById('game-title').textContent = TITLE;
 document.getElementById('game-subtitle').textContent = SUBTITLE;
 document.getElementById('story-intro').textContent = INTRO;
