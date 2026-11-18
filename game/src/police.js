@@ -1,9 +1,9 @@
-// The heat: SBPD's wanted response.
+// The heat: PSPD's wanted response.
 //
 // One job: answer Dana's crimes. Stars bring cruisers that chase and ram,
 // officers on foot who close in to arrest, and — from three stars — the
-// GULL-1 helicopter with its searchlight. Every unit has a callsign and a
-// state, so the HUD's response list names the hunt, not just a number.
+// GULL-1 helicopter with its searchlight. The hunt reads on the radar
+// (stars + flashing blips + a search ring), never in a text table.
 //
 // The helicopter is built BIG and its searchlight is a real cone + pool:
 // at three stars the player should see it in the sky without hunting for
@@ -16,7 +16,7 @@ import { createCar, flashLightBar, updateCar } from './cars.js';
 import { animateHumanoid, copLook, createHumanoid, layHumanoidDown } from './people.js';
 import { pushOutOfColliders } from './buildings.js';
 import { clampToLand } from './ground.js';
-import { glowPool } from './textures.js';
+import { beamFade, glowPool } from './textures.js';
 
 const CRUISER_SPEED = 30;
 const OFFICER_SPEED = 6.5;
@@ -166,17 +166,21 @@ export class Police {
     const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), beaconMat);
     beacon.position.set(0, -0.9, -1.6);
     group.add(beacon);
-    // Searchlight: a cone from the belly + a pool where it lands.
+    // Searchlight: a cone from the belly + a pool where it lands. The
+    // cone's apex sits at the heli (z=0) and its base at the target
+    // (z=+48, where lookAt points): v4 translated it the other way, so
+    // the beam shone 48 m into the sky AWAY from Dana. The length-fade
+    // texture dissolves the wide end instead of ending in a hard rim.
     const beam = new THREE.Mesh(
       new THREE.ConeGeometry(4.5, 48, 16, 1, true),
       new THREE.MeshBasicMaterial({
-        color: 0xfff2c0, transparent: true, opacity: 0.13,
+        map: beamFade(), color: 0xfff2c0, transparent: true, opacity: 0.13,
         blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
       }),
     );
     // Pre-rotated so the group's lookAt aims the cone down its axis.
     beam.geometry.rotateX(-Math.PI / 2);
-    beam.geometry.translate(0, 0, -24);
+    beam.geometry.translate(0, 0, 24);
     this.scene.add(beam);
     const pool = new THREE.Mesh(
       new THREE.PlaneGeometry(11, 11),
@@ -225,36 +229,6 @@ export class Police {
     }
     if (this.stars >= HEAT_RULES.heliStars) this.spawnHeli();
     else this.removeHeli();
-  }
-
-  responseList(playerX, playerZ) {
-    const list = [];
-    for (const cruiser of this.cruisers) {
-      const pos = cruiser.car.group.position;
-      list.push({
-        name: cruiser.callsign,
-        distance: Math.round(Math.hypot(pos.x - playerX, pos.z - playerZ)),
-        state: cruiser.state.toUpperCase(),
-      });
-    }
-    for (const officer of this.officers) {
-      if (officer.down) continue;
-      const pos = officer.rig.group.position;
-      list.push({
-        name: officer.callsign,
-        distance: Math.round(Math.hypot(pos.x - playerX, pos.z - playerZ)),
-        state: officer.state.toUpperCase(),
-      });
-    }
-    if (this.heli) {
-      const pos = this.heli.group.position;
-      list.push({
-        name: this.heli.callsign,
-        distance: Math.round(Math.hypot(pos.x - playerX, pos.z - playerZ)),
-        state: this.heli.state.toUpperCase(),
-      });
-    }
-    return list;
   }
 
   blips() {
