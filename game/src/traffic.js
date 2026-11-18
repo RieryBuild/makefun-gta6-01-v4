@@ -58,7 +58,20 @@ export class Traffic {
   spawnParked() {
     // The m2 prize car first: cherry red, keys in, at the beach lot.
     this.addParked(BEACH_LOT.x, BEACH_LOT.z, Math.PI / 2, 'sports', 0x8a2f2f);
-    for (let i = 0; i < 10; i += 1) {
+    // Kerb-lined boulevards: the two main streets carry parked cars on
+    // BOTH kerbs, placed deterministically, so the city frame never opens
+    // on an empty street. Eight fixed, the rest random.
+    const kerbed = [
+      // The x=0 avenue (north–south): both kerbs.
+      [9.5, -40, 0], [-9.5, -8, Math.PI], [9.5, 24, 0], [-9.5, 56, Math.PI],
+      // The z=0 boulevard (east–west): both kerbs.
+      [-72, 9.5, Math.PI / 2], [-24, -9.5, -Math.PI / 2],
+      [40, 9.5, Math.PI / 2], [88, -9.5, -Math.PI / 2],
+    ];
+    for (const [x, z, heading] of kerbed) {
+      this.addParked(x, z, heading, this.rng.pick(PARKED_TYPES));
+    }
+    for (let i = 0; i < CITY_LIFE.parked - kerbed.length; i += 1) {
       const line = this.rng.pick(ROAD_LINES);
       const alongX = this.rng.chance(0.5);
       const side = this.rng.chance(0.5) ? 1 : -1;
