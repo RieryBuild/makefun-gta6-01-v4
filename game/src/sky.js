@@ -188,6 +188,15 @@ export function buildSky(scene, renderer, rng) {
   const fill = new THREE.AmbientLight(0x60405a, 0.55);
   scene.add(fill);
 
+  // Warm rim light from the northeast (opposite the sun): a low pink
+  // kiss on the shade side of the hero, the cars and the rooftops, so
+  // silhouettes separate from the purple street. No shadows — it is a
+  // grade light, not a second sun.
+  const rim = new THREE.DirectionalLight(0xff9a8a, 0.55);
+  rim.position.set(-180, 90, -180);
+  scene.add(rim);
+  scene.add(rim.target);
+
   scene.fog = new THREE.Fog(GOLDEN_HOUR.fogColor, GOLDEN_HOUR.fogNear, GOLDEN_HOUR.fogFar);
   applySunsetEnvironment(renderer, scene);
 
