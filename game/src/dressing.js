@@ -12,7 +12,7 @@ import {
   ROAD_LINES, blockCenter,
 } from './config.js';
 import {
-  containerSide, dockConcrete, glowPool, lawn, oilStain, palmFrond, planks, wheelFace,
+  beamFade, containerSide, dockConcrete, glowPool, lawn, oilStain, palmFrond, planks, wheelFace,
 } from './textures.js';
 import { circleCollider } from './buildings.js';
 
@@ -336,11 +336,13 @@ function buildLighthouse(scene) {
   );
   cap.position.set(x, y + 3.9, z);
   group.add(cap);
-  // Rotating beam: two opposed cones of warm light.
+  // Rotating beam: two opposed cones of warm light. The length-fade
+  // texture dissolves the wide end — a bare cone ends in a hard circular
+  // rim 60 m out, which reads as a cut-off disc against the dark sky.
   const beamGroup = new THREE.Group();
   beamGroup.position.set(x, y + 1.7, z);
   const beamMat = new THREE.MeshBasicMaterial({
-    color: 0xffe2a0, transparent: true, opacity: 0.16,
+    map: beamFade(), color: 0xffe2a0, transparent: true, opacity: 0.16,
     blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
   });
   for (const dir of [0, Math.PI]) {
@@ -395,6 +397,74 @@ function buildBoat(scene, x, z, heading, colour) {
   group.add(mast);
   group.position.set(x, 0.1, z);
   group.rotation.y = heading;
+  scene.add(group);
+  return group;
+}
+
+// A DEL SOL LINE freighter riding at anchor off the docks: a long hull,
+// a white bridge tower, and container stacks in the line's colours. It
+// closes the eastern sea vista from the yard — the docks frame no longer
+// ends in empty water.
+function buildCargoShip(scene, rng) {
+  const group = new THREE.Group();
+  const hullMat = new THREE.MeshStandardMaterial({ color: 0x2e4a5e, roughness: 0.6, metalness: 0.3 });
+  const hull = new THREE.Mesh(new THREE.BoxGeometry(16, 6, 64), hullMat);
+  hull.position.y = 2;
+  hull.castShadow = true;
+  group.add(hull);
+  const bow = new THREE.Mesh(
+    new THREE.ConeGeometry(8, 12, 4),
+    hullMat,
+  );
+  bow.rotation.x = -Math.PI / 2;
+  bow.rotation.y = Math.PI / 4;
+  bow.scale.set(1, 1, 0.55);
+  bow.position.set(0, 2, 38);
+  group.add(bow);
+  const deckMat = new THREE.MeshStandardMaterial({ color: 0x8a2f2f, roughness: 0.7 });
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(15, 1, 58), deckMat);
+  deck.position.y = 5.5;
+  group.add(deck);
+  // Bridge tower at the stern.
+  const bridgeMat = new THREE.MeshStandardMaterial({ color: 0xf2e8d8, roughness: 0.7 });
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(12, 9, 8), bridgeMat);
+  bridge.position.set(0, 10, -24);
+  bridge.castShadow = true;
+  group.add(bridge);
+  const bridgeGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(12.4, 1.6, 0.6),
+    new THREE.MeshStandardMaterial({ color: 0x24384e, roughness: 0.25, metalness: 0.1 }),
+  );
+  bridgeGlass.position.set(0, 12.5, -20);
+  group.add(bridgeGlass);
+  const funnel = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.6, 1.8, 5, 10),
+    new THREE.MeshStandardMaterial({ color: 0xc28a2e, roughness: 0.6, metalness: 0.3 }),
+  );
+  funnel.position.set(0, 17, -26);
+  group.add(funnel);
+  // Container stacks along the deck.
+  const colours = ['#a83a2e', '#2e6a8a', '#c28a2e', '#5a7a4a'];
+  for (let row = 0; row < 4; row += 1) {
+    for (let col = 0; col < 6; col += 1) {
+      if (rng.chance(0.25)) continue;
+      const stack = (col + row) % 3 === 0 ? 2 : 1;
+      for (let level = 0; level < stack; level += 1) {
+        const box = new THREE.Mesh(
+          new THREE.BoxGeometry(5.6, 2.4, 2.4),
+          new THREE.MeshStandardMaterial({
+            map: containerSide(colours[(row + col + level) % colours.length], rng),
+            roughness: 0.7, metalness: 0.3,
+          }),
+        );
+        box.position.set(-5.4 + row * 3.6, 7.2 + level * 2.5, -14 + col * 7.5);
+        box.castShadow = true;
+        group.add(box);
+      }
+    }
+  }
+  group.position.set(300, -1, -40);
+  group.rotation.y = 0.15;
   scene.add(group);
   return group;
 }
@@ -797,6 +867,7 @@ export function buildDressing(scene, rng) {
   buildBoat(scene, 262, -64, 0.4, 0xe8e0d0);
   buildBoat(scene, 268, 40, -0.3, 0x7ae0ff);
   buildBoat(scene, 258, 96, 0.9, 0xff7a5e);
+  buildCargoShip(scene, rng.fork(38));
 
   // The working docks.
   const docks = buildDocksYard(scene, rng.fork(37), colliders);
