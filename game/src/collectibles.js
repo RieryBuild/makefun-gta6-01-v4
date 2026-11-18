@@ -4,11 +4,12 @@
 // $200 when Dana walks over it. The minimap shows the ones still out there.
 //
 // Spots are [id, name, x, z]. Two of them sit on the respawn doors — the
-// station door IS the SBPD Steps postcard and the hospital door IS the
-// Solmar General Steps postcard — so a BUSTED or WASTED respawn collects
+// station door IS the PSPD Steps postcard and the hospital door IS the
+// Del Sol General Steps postcard — so a BUSTED or WASTED respawn collects
 // one; the fine accounting in the game counts that in.
 
 import { POSTCARD_REWARD } from './config.js';
+import { glowPool } from './textures.js';
 
 export const POSTCARD_SPOTS = [
   ['beach', 'South Beach', 0, 205],
@@ -17,10 +18,10 @@ export const POSTCARD_SPOTS = [
   ['tower', 'The Water Tower', 120, -120],
   ['north-park', 'North Park', -120, -72],
   ['east-park', 'East Park', 72, 72],
-  ['hospital', 'Solmar General Steps', -72, -134],
+  ['hospital', 'Del Sol General Steps', -72, -134],
   ['hideout', 'The Beach House', 150, 150],
   ['crane', 'The Dock Crane', 196, 96],
-  ['station', 'SBPD Steps', -120, 134],
+  ['station', 'PSPD Steps', -120, 134],
 ];
 
 function postcardFaceTexture() {
@@ -41,9 +42,9 @@ function postcardFaceTexture() {
   ctx.fillStyle = '#1e4266';
   ctx.fillRect(0, 58, 128, 22);
   ctx.fillStyle = '#ffffff';
-  ctx.font = '900 13px Arial, sans-serif';
+  ctx.font = '900 12px Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('SOLMAR BAY', 64, 22);
+  ctx.fillText('PUERTO DEL SOL', 64, 22);
   ctx.font = '700 9px Arial, sans-serif';
   ctx.fillText('Greetings from the sunset coast', 64, 38);
   ctx.strokeStyle = '#ffffff';
@@ -68,8 +69,11 @@ export class Collectibles {
         }),
       );
       group.add(card);
+      // The halo is a radial glow, not the card's face: v4 used the face
+      // texture (a full rectangle) as the glow map, so every postcard
+      // wore a faint rectangular halo.
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: face, color: 0xffd9a0, transparent: true, opacity: 0.35,
+        map: glowPool(), color: 0xffd9a0, transparent: true, opacity: 0.35,
         blending: THREE.AdditiveBlending, depthWrite: false,
       }));
       glow.scale.set(2.2, 2.2, 1);
