@@ -1,4 +1,8 @@
-// SOLMAR BAY — make.fun gta6-01 entry program (Node 22, standard library only).
+// PUERTO DEL SOL — make.fun gta6-01 entry program (Node 22, standard library only).
+// (Revised in-session from the v4 SOLMAR BAY entry: the game was renamed
+// PUERTO DEL SOL at Reza's pick, the HUD rebuilt icon-first, the
+// rectangle artifact killed, and the streets and districts filled in.
+// The program itself is unchanged in behaviour — same caps, same checks.)
 //
 // This program hands the game in. It runs twice in a fresh container with no
 // network, a read-only copy of this repository at /bot and a writable /output,
@@ -41,7 +45,7 @@ function copyTree(source: string, target: string): void {
 }
 
 function fail(message: string): never {
-  throw new Error(`SOLMAR BAY main.ts: ${message}`);
+  throw new Error(`PUERTO DEL SOL main.ts: ${message}`);
 }
 
 // Read a JPEG's pixel dimensions by scanning for its SOF0/SOF2 marker —
