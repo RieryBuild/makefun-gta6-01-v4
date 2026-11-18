@@ -1,15 +1,16 @@
 // The city: districts, archetypes, facades and colliders.
 //
-// One job: raise Solmar Bay — one building per block (two where the
+// One job: raise Puerto del Sol — one building per block (two where the
 // archetype is small), each with a coherent facade, a varied silhouette and
 // a collider the player, the traffic and the enemies all respect.
 //
-// Five archetypes, one per district family:
+// Six archetypes, one per district family:
 //   tower     — downtown glass, set back at the top, antenna on the roof
 //   midrise   — midtown stucco with a shopfront, sign and striped awning
 //   walkup    — old-town pastel stucco with balconies and a tile roof
 //   warehouse — docks brick with a roller door and roof vents
-//   villa     — beachfront white stucco under a terracotta tile roof
+//   villa     — beachfront pastel Art Deco, stepped parapet, flat roof
+//   estate    — hills walled villa with a gate, driveway and garden
 // Landmark blocks get hand-placed buildings instead: Rosa's garage, the
 // hospital, the police station, the water tower and the beach pavilion.
 //
@@ -29,15 +30,19 @@ import {
 } from './textures.js';
 
 const FLOOR_HEIGHT = 3.4;
+// Ten original shop brands, each with a geometric mark for its sign disc
+// (see textures.js drawBrandMark): the shops read as brands, not words.
 const SHOP_NAMES = [
-  ['MARLIN BAIT', 'tackle · ice · live shrimp'],
-  ['CORAL CAFE', 'coffee · all day breakfast'],
-  ['SUNSET MOTEL', 'vacancy · weekly rates'],
-  ['PALM GROCER', 'fresh · local · open late'],
-  ['TIDE LAUNDRY', 'wash · fold · 24h'],
-  ['BAY BURGERS', 'smash burgers · shakes'],
-  ['REEF CYCLES', 'sales · repairs · rentals'],
-  ['GULL BOOKS', 'used books · maps'],
+  ['MARLIN BAIT', 'tackle · ice · live shrimp', 'fish'],
+  ['CORAL CAFE', 'coffee · all day breakfast', 'cup'],
+  ['SUNSET MOTEL', 'vacancy · weekly rates', 'sun'],
+  ['PALM GROCER', 'fresh · local · open late', 'palm'],
+  ['TIDE LAUNDRY', 'wash · fold · 24h', 'wave'],
+  ['BAY BURGERS', 'smash burgers · shakes', 'burger'],
+  ['REEF CYCLES', 'sales · repairs · rentals', 'wheel'],
+  ['GULL BOOKS', 'used books · maps', 'bird'],
+  ['SOL FUEL', 'petrol · diesel · 24h', 'drop'],
+  ['DEL SOL TACO', 'tacos · burritos · late', 'sun'],
 ];
 
 // ---------- Collision ----------
@@ -147,9 +152,9 @@ function addRoofDressing(group, width, depth, topY, rng) {
 function addShopfront(group, width, depth, palette, rng) {
   // A sign board and a striped awning on the street face (the -z face is
   // the one the south-looking shots see; the sign faces both ways).
-  const [name, sub] = SHOP_NAMES[rng.whole(0, SHOP_NAMES.length - 1)];
+  const [name, sub, mark] = SHOP_NAMES[rng.whole(0, SHOP_NAMES.length - 1)];
   const signMat = new THREE.MeshStandardMaterial({
-    map: shopSign(name, sub, '#2a2438', '#ffd9a0', rng), roughness: 0.8,
+    map: shopSign(name, sub, '#2a2438', '#ffd9a0', rng, mark), roughness: 0.8,
   });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(width * 0.7, 10), 1.6), signMat);
   sign.position.set(0, FLOOR_HEIGHT + 0.6, depth / 2 + 0.08);
@@ -302,7 +307,7 @@ function buildWarehouse(group, cx, cz, bx, bz, rng) {
   }
   // A stencilled warehouse name above the door.
   const nameMat = new THREE.MeshStandardMaterial({
-    map: shopSign('SOLMAR LINE', 'warehouse 4 · freight & storage', '#3a2e28', '#ffd9a0', rng),
+    map: shopSign('DEL SOL LINE', 'warehouse 4 · freight & storage', '#3a2e28', '#ffd9a0', rng, 'anchor'),
     roughness: 0.9,
   });
   const name = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.2), nameMat);
@@ -325,13 +330,31 @@ function buildVilla(group, cx, cz, bx, bz, rng) {
     const main = boxWithFacade(width, height, depth, facade, roofTop(rng));
     main.position.set(ox, height / 2, cz);
     group.add(main);
-    const roofMat = new THREE.MeshStandardMaterial({ map: tileRoof(rng), roughness: 0.9 });
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, width * 0.72, 2.4, 4, 1), roofMat);
-    cap.rotation.y = Math.PI / 4;
-    cap.scale.set(1, 1, depth / width);
-    cap.position.set(ox, height + 1.2, cz);
-    cap.castShadow = true;
-    group.add(cap);
+    // Miami Deco roofline: a flat slab, a three-step parapet rising over
+    // the street face, and a gold sun medallion on the middle step. The
+    // stepped silhouette is what reads as Art Deco from down the street —
+    // v4's tile prism read as a generic villa roof.
+    const trimMat = new THREE.MeshStandardMaterial({ color: palette.trim, roughness: 0.9 });
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(width + 0.4, 0.3, depth + 0.4), trimMat);
+    slab.position.set(ox, height + 0.15, cz);
+    group.add(slab);
+    const steps = [[6, 1.2, 0.6], [4, 1.0, 1.6], [2, 0.8, 2.4]];
+    for (const [stepW, stepH, stepY] of steps) {
+      const step = new THREE.Mesh(new THREE.BoxGeometry(stepW, stepH, 0.4), trimMat);
+      step.position.set(ox, height + stepY, cz + depth / 2 - 0.15);
+      step.castShadow = true;
+      group.add(step);
+    }
+    const medallion = new THREE.Mesh(
+      new THREE.CircleGeometry(0.7, 20),
+      new THREE.MeshStandardMaterial({ color: 0xd8a83a, roughness: 0.4, metalness: 0.5 }),
+    );
+    medallion.position.set(ox, height + 1.6, cz + depth / 2 + 0.08);
+    group.add(medallion);
+    // Eyebrow ledge over the ground floor: the Deco horizontal.
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(width + 0.3, 0.15, 0.9), trimMat);
+    brow.position.set(ox, FLOOR_HEIGHT + 0.3, cz + depth / 2 + 0.35);
+    group.add(brow);
     // A low terrace wall and a gate pillar by the street.
     const wall = new THREE.Mesh(
       new THREE.BoxGeometry(width, 1.1, 0.3),
@@ -342,6 +365,83 @@ function buildVilla(group, cx, cz, bx, bz, rng) {
     colliders.push(circleCollider(ox, cz, width, depth));
   }
   return colliders;
+}
+
+// ---------- Hills estate ----------
+// A walled two-floor villa: the house sits behind a garden wall with a
+// gate on the street side, a driveway apron, and two round trees in the
+// garden. The walls are 1.4 m — garden walls, the same clipping class as
+// the villa terrace wall (no collider), so the player can step over them
+// rather than snag on an invisible circle.
+function buildEstate(group, cx, cz, bx, bz, rng) {
+  const palette = facadeAt(bx, bz, 'hills');
+  const floors = floorsAt(bx, bz, 'estate');
+  const lit = litSignature(bx, bz, floors, 5);
+  const width = 20;
+  const depth = 16;
+  const height = floors * FLOOR_HEIGHT;
+  const facade = stuccoFacade(palette, floors, lit, rng);
+  const main = boxWithFacade(width, height, depth, facade, roofTop(rng));
+  main.position.set(cx, height / 2, cz - 4);
+  group.add(main);
+  const roofMat = new THREE.MeshStandardMaterial({ map: tileRoof(rng), roughness: 0.9 });
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, width * 0.72, 2.4, 4, 1), roofMat);
+  cap.rotation.y = Math.PI / 4;
+  cap.scale.set(1, 1, depth / width);
+  cap.position.set(cx, height + 1.2, cz - 4);
+  cap.castShadow = true;
+  group.add(cap);
+  // Garden wall: back + sides full, front split for the gate.
+  const wallMat = new THREE.MeshStandardMaterial({ color: palette.base, roughness: 0.95 });
+  const wallH = 1.4;
+  const back = new THREE.Mesh(new THREE.BoxGeometry(36, wallH, 0.4), wallMat);
+  back.position.set(cx, wallH / 2, cz - 18);
+  group.add(back);
+  for (const side of [-1, 1]) {
+    const flank = new THREE.Mesh(new THREE.BoxGeometry(0.4, wallH, 36), wallMat);
+    flank.position.set(cx + side * 18, wallH / 2, cz);
+    group.add(flank);
+    const front = new THREE.Mesh(new THREE.BoxGeometry(13, wallH, 0.4), wallMat);
+    front.position.set(cx + side * 11.5, wallH / 2, cz + 18);
+    group.add(front);
+    // Gate pillars with ball tops.
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.2, 0.9), wallMat);
+    pillar.position.set(cx + side * 5, 1.1, cz + 18);
+    pillar.castShadow = true;
+    group.add(pillar);
+    const ball = new THREE.Mesh(
+      new THREE.SphereGeometry(0.45, 10, 8),
+      new THREE.MeshStandardMaterial({ color: palette.trim, roughness: 0.6 }),
+    );
+    ball.position.set(cx + side * 5, 2.5, cz + 18);
+    group.add(ball);
+  }
+  // Driveway apron from the gate to the house.
+  const drive = new THREE.Mesh(
+    new THREE.PlaneGeometry(8, 12),
+    new THREE.MeshStandardMaterial({ color: 0x8a8278, roughness: 1 }),
+  );
+  drive.rotation.x = -Math.PI / 2;
+  drive.position.set(cx, 0.07, cz + 10);
+  drive.receiveShadow = true;
+  group.add(drive);
+  // Two round garden trees.
+  for (const [tx, tz] of [[-11, -10], [12, 6]]) {
+    const trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.25, 0.35, 2.4, 7),
+      new THREE.MeshStandardMaterial({ color: 0x6a4a2e, roughness: 0.9 }),
+    );
+    trunk.position.set(cx + tx, 1.2, cz + tz);
+    group.add(trunk);
+    const canopy = new THREE.Mesh(
+      new THREE.SphereGeometry(rng.between(2.2, 3), 10, 8),
+      new THREE.MeshStandardMaterial({ color: 0x4a7a3a, roughness: 0.9 }),
+    );
+    canopy.position.set(cx + tx, 3.6, cz + tz);
+    canopy.castShadow = true;
+    group.add(canopy);
+  }
+  return [circleCollider(cx, cz - 4, width, depth)];
 }
 
 // ---------- Landmarks ----------
@@ -357,7 +457,7 @@ function buildGarage(group, cx, cz, rng) {
   main.position.set(cx, height / 2, cz);
   group.add(main);
   const signMat = new THREE.MeshStandardMaterial({
-    map: shopSign("ROSA'S GARAGE", 'repairs · parts · no questions', '#1e2a3a', '#ffd23a', rng),
+    map: shopSign("ROSA'S GARAGE", 'repairs · parts · no questions', '#1e2a3a', '#ffd23a', rng, 'wheel'),
     roughness: 0.85,
   });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(12, 3), signMat);
@@ -394,7 +494,7 @@ function buildHospital(group, cx, cz, rng) {
   group.add(main);
   // Red cross on a white panel + the hospital name.
   const crossMat = new THREE.MeshStandardMaterial({
-    map: shopSign('SOLMAR GENERAL', 'hospital · emergency 24h', '#eef0ea', '#c23a3a', rng),
+    map: shopSign('DEL SOL GENERAL', 'hospital · emergency 24h', '#eef0ea', '#c23a3a', rng),
     roughness: 0.85,
   });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(11, 2.6), crossMat);
@@ -425,7 +525,7 @@ function buildStation(group, cx, cz, rng) {
   main.position.set(cx, height / 2, cz);
   group.add(main);
   const signMat = new THREE.MeshStandardMaterial({
-    map: shopSign('SBPD', 'solmar bay police · precinct 4', '#1a2a4a', '#f4f2ec', rng),
+    map: shopSign('PSPD', 'puerto del sol police · precinct 4', '#1a2a4a', '#f4f2ec', rng, 'star'),
     roughness: 0.85,
   });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.2), signMat);
@@ -479,7 +579,12 @@ function buildPavilion(group, cx, cz, rng) {
   const width = 22;
   const depth = 14;
   const height = 6;
-  const palette = { base: '#f4ead6', trim: '#d8c8a8', glass: '#5d8aa0', glow: '#ffca7a' };
+  // Terracotta, not white: the pavilion sits in full sun facing the
+  // camera in the mission frame, and the white stucco blew out to a
+  // featureless mass. The first revision pass used pale peach and it
+  // still washed out — this deeper terracotta holds its windows in
+  // direct sun and matches the Deco beachfront row.
+  const palette = { base: '#e0a878', trim: '#c08a5a', glass: '#5d8aa0', glow: '#ffca7a' };
   const facade = stuccoFacade(palette, 2, litSignature(0, 3, 2, 4), rng);
   const main = boxWithFacade(width, height, depth, facade, roofTop(rng));
   main.position.set(cx, height / 2, cz);
@@ -492,12 +597,25 @@ function buildPavilion(group, cx, cz, rng) {
   cap.castShadow = true;
   group.add(cap);
   const signMat = new THREE.MeshStandardMaterial({
-    map: shopSign('PIER SNACKS', 'ice cream · cold drinks · bait', '#2a6a8a', '#fff2c0', rng),
+    map: shopSign('PIER SNACKS', 'ice cream · cold drinks · bait', '#2a6a8a', '#fff2c0', rng, 'sun'),
     roughness: 0.85,
   });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 2), signMat);
   sign.position.set(cx, height - 1.2, cz + depth / 2 + 0.1);
   group.add(sign);
+  // Sunburst over the sign: a gold disc with eight rays, the pavilion's
+  // Deco signature against the beachfront sky.
+  const sunMat = new THREE.MeshStandardMaterial({ color: 0xd8a83a, roughness: 0.4, metalness: 0.5 });
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.3, 20), sunMat);
+  disc.position.set(cx, height + 1.8, cz + depth / 2 + 0.15);
+  group.add(disc);
+  for (let i = 0; i < 8; i += 1) {
+    const angle = (i / 8) * Math.PI * 2;
+    const ray = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.1, 0.08), sunMat);
+    ray.position.set(cx + Math.cos(angle) * 2.1, height + 1.8 + Math.sin(angle) * 2.1, cz + depth / 2 + 0.15);
+    ray.rotation.z = angle - Math.PI / 2;
+    group.add(ray);
+  }
   return [circleCollider(cx, cz, width, depth)];
 }
 
@@ -510,7 +628,7 @@ function buildDockOffice(group, rng) {
   main.position.set(cx, 2.5, cz);
   group.add(main);
   const signMat = new THREE.MeshStandardMaterial({
-    map: shopSign('DOCK OFFICE', 'harbour master · est. 1974', '#3a2e28', '#ffd9a0', rng),
+    map: shopSign('DOCK OFFICE', 'harbour master · est. 1974', '#3a2e28', '#ffd9a0', rng, 'anchor'),
     roughness: 0.9,
   });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.5), signMat);
@@ -535,6 +653,7 @@ const ARCHETYPE_BUILDERS = {
   oldtown: buildWalkup,
   docks: buildWarehouse,
   beachfront: buildVilla,
+  hills: buildEstate,
 };
 
 export function buildCity(scene, rng) {
